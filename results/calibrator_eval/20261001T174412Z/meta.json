@@ -1,0 +1,56 @@
+{
+  "id": "20261001T174412Z",
+  "kind": "calibrator_eval",
+  "title": "Calibrator routing and calibration, 245 test questions",
+  "created_at": "2026-10-01T17:44:12.743131+00:00",
+  "headline": {
+    "auc": 0.7245878136200717,
+    "adaptive_recall": 0.73,
+    "crag_recall": 0.73,
+    "time_saved": 0.14
+  },
+  "git": {
+    "commit": "7029d0139635265a13effd99466d029f07f7d4f2",
+    "dirty": true
+  },
+  "command": [
+    "scripts/evaluate_calibrator.py"
+  ],
+  "machine": {
+    "os": "Linux",
+    "python": "3.14.4",
+    "cpu": "13th Gen Intel Core i5-1335U",
+    "ram_gb": 15
+  },
+  "config": {
+    "CHROMA_PATH": "~/Desktop/ChromaDB/Data",
+    "CHROMA_DOCS_COLLECTION": "docs",
+    "CHROMA_QUESTIONS_COLLECTION": "Questions",
+    "EMBEDDING_MODEL": "sentence-transformers/all-MiniLM-L6-v2",
+    "DENSE_QUERY_MODE": "collection",
+    "GENERATOR_BACKEND": "ollama",
+    "GENERATOR_MODEL_DEFAULT": "qwen2.5:7b-instruct-q4_K_M",
+    "OLLAMA_HOST": "http://127.0.0.1:11434",
+    "GENERATOR_TIMEOUT_SECONDS": 600,
+    "GENERATOR_MAX_CONTEXT_CHARS": 4500,
+    "GENERATOR_MAX_NEW_TOKENS": 256,
+    "GENERATOR_LOAD_ON_STARTUP": false,
+    "RRF_ALPHA": 20.0,
+    "RRF_BM25_WEIGHT": 1.0,
+    "RRF_DENSE_WEIGHT": 0.8,
+    "RRF_CANDIDATES": 50,
+    "TOP_K_DEFAULT": 10,
+    "BM25_CACHE_PATH": "data/bm25_store/bm25.joblib",
+    "ROUTER_ABSTAIN_MEAN_THRESHOLD": 0.0,
+    "ROUTER_ABSTAIN_STD_THRESHOLD": 0.2,
+    "ROUTER_FAST_MEAN_THRESHOLD": 0.89,
+    "CALIBRATOR_MODEL_PATH": "models/calibrator.pkl",
+    "RERANKER_MODEL": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "CRAG_RETRIEVAL_MULTIPLIER": 2,
+    "CRAG_PASSAGES_PER_DOC": 2,
+    "CRAG_MIN_RELEVANCE": 0.0,
+    "ABLATION_RUNS_DIR": "data/ablation_runs",
+    "CALIBRATION_REPORT_PATH": "data/calibration_report.json",
+    "RESULTS_DIR": "results"
+  }
+}

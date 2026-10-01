@@ -12,11 +12,11 @@ gold documents among the documents handed to the generator.
 
 | Strategy | Recall@10 | MRR | nDCG@10 | Found all gold docs | Latency p50 | p95 |
 |---|---:|---:|---:|---:|---:|---:|
-| Vanilla (dense) | **0.388** | 0.349 | 0.331 | 34.7% | 0.48 s | 0.88 s |
+| Vanilla (dense) | **0.388** | 0.349 | 0.331 | 34.7% | 0.41 s | 0.67 s |
 | BM25 | **0.662** | 0.608 | 0.594 | 60.2% | 0.01 s | 0.01 s |
-| Hybrid (RRF) | **0.716** | 0.588 | 0.594 | 65.7% | 0.58 s | 0.91 s |
-| CRAG (rerank) | **0.730** | 0.707 | 0.680 | 66.9% | 5.88 s | 8.68 s |
-| Adaptive (calibrated) | **0.726** | 0.700 | 0.673 | 66.5% | 6.09 s | 9.16 s |
+| Hybrid (RRF) | **0.716** | 0.588 | 0.594 | 65.7% | 0.57 s | 0.74 s |
+| CRAG (rerank) | **0.730** | 0.707 | 0.680 | 66.9% | 5.39 s | 6.87 s |
+| Adaptive (calibrated) | **0.726** | 0.700 | 0.673 | 66.5% | 5.24 s | 6.47 s |
 
 MRR and nDCG reward putting the gold documents *first*, which is what the reranker buys; latencies were
 measured on a CPU-only laptop while other jobs were running, so compare them relative to each other.
@@ -29,7 +29,7 @@ xychart-beta
     bar [0.388, 0.662, 0.716, 0.730, 0.726]
 ```
 
-Adaptive routing sent 37 questions down the fast path, 207 to cross-encoder correction and 1 to abstention. [Per-question data](retrieval_eval/20261001T161255Z_test)
+Adaptive routing sent 37 questions down the fast path, 207 to cross-encoder correction and 1 to abstention. [Per-question data](retrieval_eval/20261001T165635Z_test)
 
 ## Calibrator
 
@@ -45,11 +45,11 @@ Suggested thresholds from out-of-fold training predictions: fast path if p ≥ 0
 
 | Policy | Recall@10 | Retrieval time per query |
 |---|---:|---:|
-| Never rerank (hybrid) | 0.716 | 0.22 s |
-| Always rerank (CRAG) | 0.730 | 3.57 s |
-| **Calibrated routing** | **0.730** | **3.04 s** |
+| Never rerank (hybrid) | 0.716 | 0.48 s |
+| Always rerank (CRAG) | 0.730 | 5.28 s |
+| **Calibrated routing** | **0.730** | **4.53 s** |
 
-Routing matches always-rerank recall and saves 15% of its retrieval time. [Evaluation data](calibrator_eval/20261001T154033Z)
+Routing matches always-rerank recall and saves 14% of its retrieval time. [Evaluation data](calibrator_eval/20261001T174412Z)
 
 ## Generator comparison
 
@@ -75,6 +75,8 @@ Judge check on 25 questions: gold answers judged correct 100%; another question'
 
 | Date (UTC) | Experiment | Headline | Folder | Commit |
 |---|---|---|---|---|
+| 2026-10-01 17:44 | Calibrator evaluation: Calibrator routing and calibration, 245 test questions | auc 0.725, adaptive recall 0.730, crag recall 0.730, time saved 0.140 | [20261001T174412Z](calibrator_eval/20261001T174412Z) | `7029d01 + local changes` |
+| 2026-10-01 16:56 | Retrieval evaluation: Retrieval strategies, test split, top-10 | hybrid 0.716, crag 0.730, adaptive 0.726 | [20261001T165635Z_test](retrieval_eval/20261001T165635Z_test) | `7029d01 + local changes` |
 | 2026-10-01 16:12 | Retrieval evaluation: Retrieval strategies, test split, top-10 | hybrid 0.716, crag 0.730, adaptive 0.726 | [20261001T161255Z_test](retrieval_eval/20261001T161255Z_test) | `ca52165 + local changes` |
 | 2026-10-01 15:40 | Calibrator evaluation: Calibrator routing and calibration, 245 test questions | auc 0.725, adaptive recall 0.730, crag recall 0.730, time saved 0.148 | [20261001T154033Z](calibrator_eval/20261001T154033Z) | `4d71d73 + local changes` |
 | 2026-10-01 15:10 | Retrieval evaluation: Retrieval strategies, test split, top-10 | hybrid 0.716, crag 0.730, adaptive 0.726 | [20261001T151024Z_test](retrieval_eval/20261001T151024Z_test) | `cf61fc2 + local changes` |
