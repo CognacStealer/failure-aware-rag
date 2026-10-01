@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Working data: rebuilt or regenerated locally (see docs/WORKFLOW.md)
+#   data/bm25_store/    BM25 index cache (~280 MB, rebuilt on first start)
+#   data/ablation_runs/ raw, in-progress ablation logs (finished runs are snapshotted into results/)
+#   data/logs/          pipeline logs
+data/
+
+# Local tooling
+.claude/
+.idea/
+.vscode/
+*.log
