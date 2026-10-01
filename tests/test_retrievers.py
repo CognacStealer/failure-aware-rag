@@ -1,6 +1,8 @@
+import tempfile
 import unittest
+from pathlib import Path
 
-from core.retriever_bm25 import BM25Retriever, tokenize
+from core.retriever_bm25 import BM25Retriever, corpus_signature, tokenize
 from core.retriever_chroma import ChromaDenseRetriever
 
 
@@ -19,8 +21,42 @@ class BM25RetrieverTests(unittest.TestCase):
         retriever = BM25Retriever(self.records)
         rows = retriever.retrieve("alpha launch", top_k=2)
         self.assertEqual(rows[0]["doc_id"], "a")
-        self.assertGreater(rows[0]["rrf_score"], 0)
+        self.assertEqual(rows[0]["title"], "Launch")
+        self.assertGreater(rows[0]["bm25_score"], 0)
+        self.assertNotIn("content", rows[0])
         self.assertEqual(retriever.retrieve("no matching terms"), [])
+
+    def test_bm25_matches_rank_bm25_scores(self):
+        from rank_bm25 import BM25Okapi
+
+        reference = BM25Okapi([tokenize(r["content"]) for r in self.records])
+        retriever = BM25Retriever(self.records)
+        for query in ["alpha launch", "beta beta review", "gamma"]:
+            expected = reference.get_scores(tokenize(query))
+            for got, want in zip(retriever.scores(query), expected):
+                self.assertAlmostEqual(float(got), want, places=5)
+
+    def test_rows_are_hydrated_through_fetch_content(self):
+        fetched = []
+
+        def fetch(ids):
+            fetched.append(ids)
+            return {doc_id: f"text of {doc_id}" for doc_id in ids}
+
+        rows = BM25Retriever(self.records, fetch_content=fetch).retrieve("alpha", top_k=1)
+        self.assertEqual(fetched, [["a"]])
+        self.assertEqual(rows[0]["content"], "text of a")
+
+    def test_cache_round_trip_is_tied_to_the_corpus(self):
+        retriever = BM25Retriever(self.records)
+        signature = corpus_signature(r["doc_id"] for r in self.records)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "bm25.joblib"
+            retriever.save(path, signature)
+            loaded = BM25Retriever.load(path, signature)
+            self.assertEqual(loaded.retrieve("alpha launch"), retriever.retrieve("alpha launch"))
+            self.assertIsNone(BM25Retriever.load(path, corpus_signature(["other"])))
+            self.assertIsNone(BM25Retriever.load(Path(directory) / "missing", signature))
 
     def test_empty_bm25_index_is_safe(self):
         self.assertEqual(BM25Retriever([]).retrieve("anything"), [])
@@ -51,6 +87,7 @@ class ChromaDenseRetrieverTests(unittest.TestCase):
         self.assertEqual(rows[0]["content"], "retrieved text")
         self.assertEqual(rows[0]["metadata"]["source_type"], "wiki")
         self.assertAlmostEqual(rows[0]["distance"], 0.25)
+        self.assertAlmostEqual(rows[0]["dense_score"], 0.875)  # squared L2 -> cosine
 
     def test_invalid_embedding_mode_is_rejected(self):
         with self.assertRaises(ValueError):
