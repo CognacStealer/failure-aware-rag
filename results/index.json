@@ -1,5 +1,24 @@
 [
   {
+    "id": "20261001T161255Z_test",
+    "kind": "retrieval_eval",
+    "title": "Retrieval strategies, test split, top-10",
+    "created_at": "2026-10-01T16:12:55.185183+00:00",
+    "headline": {
+      "hybrid": 0.716,
+      "crag": 0.73,
+      "adaptive": 0.726
+    },
+    "path": "retrieval_eval/20261001T161255Z_test",
+    "files": [
+      "meta.json",
+      "per_question.csv",
+      "result.json"
+    ],
+    "git_commit": "ca5216558f1dc47099fc2b6342b31171da539081",
+    "git_dirty": true
+  },
+  {
     "id": "20261001T154033Z",
     "kind": "calibrator_eval",
     "title": "Calibrator routing and calibration, 245 test questions",

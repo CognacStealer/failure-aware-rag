@@ -193,6 +193,18 @@ def _link(entry: dict[str, Any], label: str = "folder") -> str:
     return f"[{label}]({entry['path']})"
 
 
+def _ranked_table(rows: list[tuple[str, dict[str, Any]]]) -> list[str]:
+    return [
+        "| Strategy | Recall@10 | MRR | nDCG@10 | Found all gold docs | Latency p50 | p95 |",
+        "|---|---:|---:|---:|---:|---:|---:|",
+        *[f"| {name} | **{v['recall_at_k']:.3f}** | {v['mrr']:.3f} | {v['ndcg_at_k']:.3f} | {v['complete_rate']:.1%} "
+          f"| {v['seconds_p50']:.2f} s | {v['seconds_p95']:.2f} s |" for name, v in rows],
+        "",
+        "MRR and nDCG reward putting the gold documents *first*, which is what the reranker buys; latencies were",
+        "measured on a CPU-only laptop while other jobs were running, so compare them relative to each other.",
+    ]
+
+
 def _section_retrieval(entry: dict[str, Any]) -> list[str]:
     r = _load(entry)
     names = {"vanilla": "Vanilla (dense)", "bm25": "BM25", "hybrid": "Hybrid (RRF)", "crag": "CRAG (rerank)",
@@ -206,9 +218,11 @@ def _section_retrieval(entry: dict[str, Any]) -> list[str]:
         f"Recall@{r['top_k']} on {r['answerable']} answerable **held-out** questions: the share of each question's",
         "gold documents among the documents handed to the generator.",
         "",
-        "| Strategy | Recall@10 | Found ≥1 gold doc | Found all gold docs |",
-        "|---|---:|---:|---:|",
-        *[f"| {name} | **{v['recall_at_k']:.3f}** | {v['hit_rate']:.1%} | {v['complete_rate']:.1%} |" for name, v in rows],
+        *(_ranked_table(rows) if all("mrr" in v for _, v in rows) else [
+            "| Strategy | Recall@10 | Found ≥1 gold doc | Found all gold docs |",
+            "|---|---:|---:|---:|",
+            *[f"| {name} | **{v['recall_at_k']:.3f}** | {v['hit_rate']:.1%} | {v['complete_rate']:.1%} |" for name, v in rows],
+        ]),
         "",
         "```mermaid",
         "xychart-beta",
