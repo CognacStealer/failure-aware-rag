@@ -40,7 +40,13 @@ to answer fast, rerank first, or abstain.
 
 Suggested thresholds from out-of-fold training predictions: fast path if p ≥ 0.89; no confidence cutoff justified abstaining, so abstention is left to model uncertainty. [Training run and model file](calibrator_training/20261001T145020Z)
 
-*Cost-vs-quality evaluation of the routing is running.*
+| Policy | Recall@10 | Retrieval time per query |
+|---|---:|---:|
+| Never rerank (hybrid) | 0.716 | 0.22 s |
+| Always rerank (CRAG) | 0.730 | 3.57 s |
+| **Calibrated routing** | **0.730** | **3.04 s** |
+
+Routing matches always-rerank recall and saves 15% of its retrieval time. [Evaluation data](calibrator_eval/20261001T154033Z)
 
 ## Generator comparison
 
@@ -66,6 +72,7 @@ Judge check on 25 questions: gold answers judged correct 100%; another question'
 
 | Date (UTC) | Experiment | Headline | Folder | Commit |
 |---|---|---|---|---|
+| 2026-10-01 15:40 | Calibrator evaluation: Calibrator routing and calibration, 245 test questions | auc 0.725, adaptive recall 0.730, crag recall 0.730, time saved 0.148 | [20261001T154033Z](calibrator_eval/20261001T154033Z) | `4d71d73 + local changes` |
 | 2026-10-01 15:10 | Retrieval evaluation: Retrieval strategies, test split, top-10 | hybrid 0.716, crag 0.730, adaptive 0.726 | [20261001T151024Z_test](retrieval_eval/20261001T151024Z_test) | `cf61fc2 + local changes` |
 | 2026-10-01 14:50 | Calibrator training: Calibrator fit on 245 train questions | test auc 0.725, test brier 0.202, brier constant 0.232 | [20261001T145020Z](calibrator_training/20261001T145020Z) | `26f0ff1 + local changes` |
 | 2026-10-01 01:55 | Generator ablation: Generators on 25/500 questions (full_benchmark) | Qwen2.5-7B-Instruct 0.472, Phi-3-mini-4k-instruct 0.317, phi-2 0.222, n 25 | [20261001T015505Z_full_benchmark](generator_ablation/20261001T015505Z_full_benchmark) | `26f0ff1 + local changes` |

@@ -1,5 +1,25 @@
 [
   {
+    "id": "20261001T154033Z",
+    "kind": "calibrator_eval",
+    "title": "Calibrator routing and calibration, 245 test questions",
+    "created_at": "2026-10-01T15:40:33.584061+00:00",
+    "headline": {
+      "auc": 0.7245878136200717,
+      "adaptive_recall": 0.73,
+      "crag_recall": 0.73,
+      "time_saved": 0.148
+    },
+    "path": "calibrator_eval/20261001T154033Z",
+    "files": [
+      "meta.json",
+      "per_question.csv",
+      "result.json"
+    ],
+    "git_commit": "4d71d73b4949f25c129e4913f63f041add635730",
+    "git_dirty": true
+  },
+  {
     "id": "20261001T151024Z_test",
     "kind": "retrieval_eval",
     "title": "Retrieval strategies, test split, top-10",
