@@ -1,5 +1,38 @@
 [
   {
+    "id": "20261001T185636Z_full_benchmark",
+    "kind": "generator_ablation",
+    "title": "Generators on 25/500 questions (full_benchmark)",
+    "created_at": "2026-10-01T18:56:36.110310+00:00",
+    "headline": {
+      "Qwen2.5-7B-Instruct": 0.472,
+      "Phi-3-mini-4k-instruct": 0.317,
+      "phi-2": 0.222,
+      "n": 25
+    },
+    "path": "generator_ablation/20261001T185636Z_full_benchmark",
+    "files": [
+      "Phi-3-mini-4k-instruct.jsonl",
+      "Phi-3-mini-4k-instruct_judged.jsonl",
+      "Qwen2_5-7B-Instruct.jsonl",
+      "Qwen2_5-7B-Instruct_judged.jsonl",
+      "context_controls.jsonl",
+      "context_controls_llm_judge.jsonl",
+      "context_facts.jsonl",
+      "context_facts_llm_judge.jsonl",
+      "judge_sanity.jsonl",
+      "manifest.json",
+      "meta.json",
+      "per_question.csv",
+      "phi-2.jsonl",
+      "phi-2_judged.jsonl",
+      "result.json",
+      "retrieval.jsonl"
+    ],
+    "git_commit": "e9c393013c825e8c26d569de3c44891efab47c80",
+    "git_dirty": true
+  },
+  {
     "id": "20261001T174412Z",
     "kind": "calibrator_eval",
     "title": "Calibrator routing and calibration, 245 test questions",

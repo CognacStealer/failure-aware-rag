@@ -69,12 +69,28 @@ Score = correct × share of gold facts stated.
 | Qwen2.5-7B-Instruct vs phi-2 | +0.25 | +0.09 – +0.43 | real difference |
 | Phi-3-mini-4k-instruct vs phi-2 | +0.10 | -0.08 – +0.28 | not yet distinguishable |
 
-Judge check on 25 questions: gold answers judged correct 100%; another question's answer judged correct 0% (9% of its facts falsely credited). [Answers, judgments and per-question table](generator_ablation/20261001T015505Z_full_benchmark)
+### Why answers fail
+
+For 25 questions a cross-encoder checked which gold facts reached each model's
+context (45% on average; 44% of questions had at least 50% of their facts in context). Each wrong answer is traced to the
+stage that lost the evidence: a *generation error* had the evidence and still failed, *context loss*
+retrieved the documents but not the facts into the prompt, a *retrieval miss* never found the documents.
+
+| Model | Correct | Generation error | Context loss | Retrieval miss | Missed abstention |
+|---|---:|---:|---:|---:|---:|
+| Qwen2.5-7B-Instruct | 14 (56%) | 3 (12%) | 4 (16%) | 4 (16%) | 0 (0%) |
+| Phi-3-mini-4k-instruct | 11 (44%) | 4 (16%) | 4 (16%) | 6 (24%) | 0 (0%) |
+| phi-2 | 8 (32%) | 7 (28%) | 6 (24%) | 4 (16%) | 0 (0%) |
+
+Context check false-positive rate (facts credited to another question's context): 1% on 25 controls.
+
+Judge check on 25 questions: gold answers judged correct 100%; another question's answer judged correct 0% (9% of its facts falsely credited). [Answers, judgments and per-question table](generator_ablation/20261001T185636Z_full_benchmark)
 
 ## All saved results
 
 | Date (UTC) | Experiment | Headline | Folder | Commit |
 |---|---|---|---|---|
+| 2026-10-01 18:56 | Generator ablation: Generators on 25/500 questions (full_benchmark) | Qwen2.5-7B-Instruct 0.472, Phi-3-mini-4k-instruct 0.317, phi-2 0.222, n 25 | [20261001T185636Z_full_benchmark](generator_ablation/20261001T185636Z_full_benchmark) | `e9c3930 + local changes` |
 | 2026-10-01 17:44 | Calibrator evaluation: Calibrator routing and calibration, 245 test questions | auc 0.725, adaptive recall 0.730, crag recall 0.730, time saved 0.140 | [20261001T174412Z](calibrator_eval/20261001T174412Z) | `7029d01 + local changes` |
 | 2026-10-01 16:56 | Retrieval evaluation: Retrieval strategies, test split, top-10 | hybrid 0.716, crag 0.730, adaptive 0.726 | [20261001T165635Z_test](retrieval_eval/20261001T165635Z_test) | `7029d01 + local changes` |
 | 2026-10-01 16:12 | Retrieval evaluation: Retrieval strategies, test split, top-10 | hybrid 0.716, crag 0.730, adaptive 0.726 | [20261001T161255Z_test](retrieval_eval/20261001T161255Z_test) | `ca52165 + local changes` |

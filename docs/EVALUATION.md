@@ -70,6 +70,40 @@ Judge controls: gold answers judged correct 100% (97% of facts found); another
 question's answer judged correct 0% (9% of facts falsely credited). Qwen's lead over
 both others is already significant; Phi-3 vs phi-2 is not yet.
 
+## 4. Error attribution: retrieval or generation?
+
+For every question, which gold facts actually reached the model's context (the
+documents in the prompt, not the question) is checked; each wrong answer is then
+traced back from the generator:
+
+| Outcome | Meaning | What to fix |
+|---|---|---|
+| Generation error | ≥ 50% of gold facts were in context, yet the answer was wrong | prompt or model |
+| Context loss | every gold document was retrieved, but its facts did not reach the prompt | chunking, context assembly |
+| Retrieval miss | a gold document was not retrieved | retrieval, reranking |
+| Missed abstention | an unanswerable question got an answer | abstention |
+
+**The fact check is a cross-encoder, not the LLM judge.** The first version asked the
+8B judge to list facts present in the context. Its negative control - the same facts
+checked against a *different* question's context - exposed it: it found 79% of facts in
+the right context and 72% in an unrelated one, i.e. no signal. Scoring each fact against
+each document block with the cross-encoder (`ms-marco-MiniLM-L-6-v2`) separated the two
+with AUC 0.884 on 142 facts; at a 0.1 threshold it credits 1-3% of facts in unrelated
+contexts, and it costs ~3 s per question instead of ~160 s. It is conservative: facts
+reworded in the documents can be missed, which shifts some generation errors toward
+context loss.
+
+Preliminary, first 25 questions:
+
+| Model | Correct | Generation error | Context loss | Retrieval miss |
+|---|---:|---:|---:|---:|
+| Qwen2.5-7B | 56% | 12% | 16% | 16% |
+| Phi-3-mini | 44% | 16% | 16% | 24% |
+| phi-2 | 32% | 28% | 24% | 16% |
+
+For the strongest model most failures happen *before* generation; context loss - facts
+cut by the 4,500-character prompt budget - is a large share for every model.
+
 ### Lessons from building the judge
 
 - A per-fact true/false JSON made the 8B judge count past the last fact and mark nearly
