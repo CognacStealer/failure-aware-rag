@@ -1,5 +1,6 @@
 /* RAG Lab design system: shared by the Ask page (index.html) and the monitor (ablation.html). */
 :root {
+  --topbar-h:56px; --control-h:34px;
   --bg:#ffffff; --bg-subtle:#fafafa; --card:#ffffff; --hover:#f4f4f5; --border:#e4e4e7; --grid:#ececef;
   --text:#09090b; --muted:#71717a; --faint:#a1a1aa; --accent:#0d9488;
   /* categorical slots 1-3, light steps (validated on #fff; aqua < 3:1, so marks are always labelled) */
@@ -38,8 +39,8 @@ code { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12p
 
 /* shell */
 .app { display:grid; grid-template-columns:232px minmax(0,1fr); min-height:100vh }
-.sidebar { position:sticky; top:0; height:100vh; display:flex; flex-direction:column; gap:20px; padding:18px 14px; background:var(--bg-subtle); border-right:1px solid var(--border) }
-.brand { display:flex; align-items:center; gap:10px; padding:4px 8px; font-weight:650 }
+.sidebar { position:sticky; top:0; height:100vh; display:flex; flex-direction:column; gap:18px; padding:0 14px 18px; background:var(--bg-subtle); border-right:1px solid var(--border) }
+.brand { display:flex; align-items:center; gap:10px; height:var(--topbar-h); margin:0 -14px; padding:0 22px; border-bottom:1px solid var(--border); font-weight:650; flex:none }
 .brand-mark { width:28px; height:28px; border-radius:8px; background:var(--text); color:var(--bg); display:grid; place-items:center; font-size:12px; font-weight:700 }
 .brand small { display:block; color:var(--muted); font-weight:500; font-size:12px; line-height:1.2 }
 .nav-label { font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); padding:0 10px; margin-bottom:6px }
@@ -50,16 +51,16 @@ nav svg { width:16px; height:16px; flex:none }
 .side-footer { margin-top:auto; display:grid; gap:10px }
 .side-card { border:1px solid var(--border); background:var(--card); border-radius:10px; padding:10px 12px; font-size:12px; color:var(--muted) }
 .side-card b { color:var(--text); font-weight:600 }
-select { width:100%; border:1px solid var(--border); background:var(--card); border-radius:8px; padding:6px 8px }
+select { width:100%; height:var(--control-h); border:1px solid var(--border); background:var(--card); border-radius:8px; padding:0 8px }
 .main { min-width:0 }
-.topbar { position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:12px; padding:12px 28px; border-bottom:1px solid var(--border); background:color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter:blur(8px) }
+.topbar { position:sticky; top:0; z-index:5; display:flex; align-items:center; gap:12px; height:var(--topbar-h); padding:0 28px; border-bottom:1px solid var(--border); background:color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter:blur(8px) }
 .crumbs { color:var(--muted); font-size:13px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
 .crumbs b { color:var(--text); font-weight:600 }
 .topbar-right { margin-left:auto; display:flex; align-items:center; gap:10px; flex:none }
 .updated { color:var(--faint); font-size:12px }
-.icon-btn { border:1px solid var(--border); background:var(--card); border-radius:8px; height:32px; padding:0 10px; display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; color:var(--muted) }
+.icon-btn { border:1px solid var(--border); background:var(--card); border-radius:8px; height:var(--control-h); padding:0 12px; display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; color:var(--muted) }
 .icon-btn:hover { color:var(--text) }
-.content { padding:24px 28px 64px; max-width:1320px }
+.content { padding:24px 28px 64px; max-width:1400px }
 .page-head { margin-bottom:20px }
 .page-head h1 { font-size:24px; letter-spacing:-.02em; margin:0 0 4px; font-weight:650 }
 .page-head p { margin:0; color:var(--muted); max-width:760px }
@@ -72,13 +73,15 @@ select { width:100%; border:1px solid var(--border); background:var(--card); bor
 .wide-left { grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) }
 .mt { margin-top:16px }
 .card { background:var(--card); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); min-width:0 }
-.card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:16px 18px 0 }
+.card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 18px 0 }
 .card-head h2 { font-size:14px; font-weight:600; margin:0 }
 .card-head p { margin:2px 0 0; color:var(--muted); font-size:12px }
 .card-body { padding:14px 18px 18px }
 .kpi { padding:16px 18px }
 .kpi-label { font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted) }
-.kpi-value { font-size:26px; font-weight:650; letter-spacing:-.02em; margin:6px 0 2px; line-height:1.15; display:flex; align-items:center }
+.kpi-value { font-size:26px; font-weight:650; letter-spacing:-.02em; margin:6px 0 2px; line-height:1.15; display:flex; align-items:center; gap:9px; min-width:0; white-space:nowrap }
+.kpi-value .ellipsis { overflow:hidden; text-overflow:ellipsis }
+.kpi-value { min-height:30px }
 .kpi-caption { color:var(--muted); font-size:12px }
 .badge { display:inline-flex; align-items:center; gap:5px; border:1px solid var(--border); border-radius:999px; padding:1px 8px; font-size:11px; font-weight:600; color:var(--muted); white-space:nowrap }
 .badge.live { color:var(--text) }
@@ -95,8 +98,8 @@ select { width:100%; border:1px solid var(--border); background:var(--card); bor
 .track > span { display:block; height:100%; border-radius:999px; background:var(--accent); transition:width .6s ease }
 .swatch { width:9px; height:9px; border-radius:3px; display:inline-block; flex:none }
 .muted { color:var(--muted) } .faint { color:var(--faint) } .small { font-size:12px }
-.segmented { display:inline-flex; border:1px solid var(--border); border-radius:8px; padding:2px; background:var(--bg-subtle); flex-wrap:wrap }
-.segmented button { border:1px solid transparent; background:transparent; padding:3px 10px; border-radius:6px; font-size:12px; color:var(--muted); cursor:pointer }
+.segmented { display:inline-flex; align-items:stretch; height:var(--control-h); border:1px solid var(--border); border-radius:8px; padding:2px; background:var(--bg-subtle); flex:none }
+.segmented button { border:1px solid transparent; background:transparent; padding:0 12px; white-space:nowrap; border-radius:6px; font-size:12px; color:var(--muted); cursor:pointer }
 .segmented button[aria-pressed="true"] { background:var(--card); color:var(--text); box-shadow:var(--shadow); border-color:var(--border) }
 .empty { color:var(--muted); padding:28px; text-align:center; font-size:13px }
 .note { color:var(--muted); font-size:12px; margin:10px 0 0 }
@@ -115,8 +118,8 @@ tbody tr:last-child td { border-bottom:0 }
 
 /* now / stepper */
 .phase { display:flex; align-items:center; gap:8px; font-weight:600 }
-.steps { display:flex; align-items:center; gap:6px; margin:14px 0 12px; flex-wrap:wrap }
-.step { display:flex; align-items:center; gap:6px; font-size:12px; padding:4px 10px; border-radius:999px; border:1px solid var(--border); color:var(--faint) }
+.steps { display:flex; align-items:center; gap:4px; margin:14px 0 12px; flex-wrap:wrap; row-gap:8px }
+.step { display:flex; align-items:center; gap:6px; font-size:12px; padding:3px 9px; white-space:nowrap; border-radius:999px; border:1px solid var(--border); color:var(--faint) }
 .step.done { color:var(--muted) } .step.done::before { content:"✓"; font-size:11px }
 .step.active { color:var(--text); border-color:var(--accent); background:color-mix(in srgb, var(--accent) 10%, transparent) }
 .question { border-left:2px solid var(--border); padding-left:12px; color:var(--text); font-size:13px }
@@ -142,7 +145,7 @@ details.data table { margin-top:6px }
 
 /* answers */
 .toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:14px }
-.search { flex:1; min-width:200px; border:1px solid var(--border); background:var(--card); border-radius:8px; padding:7px 10px }
+.search { flex:1; min-width:200px; height:var(--control-h); border:1px solid var(--border); background:var(--card); border-radius:8px; padding:0 12px }
 .feed { display:grid; gap:12px }
 .item { padding:16px 18px; transition:border-color 1.2s }
 .item.fresh { border-color:var(--accent) }
@@ -163,11 +166,13 @@ details.data table { margin-top:6px }
   .sidebar, .sidebar nav, .main { min-width:0 }
   .topbar { flex-wrap:wrap }
   .sidebar { position:static; height:auto; flex-direction:row; flex-wrap:wrap; align-items:center; gap:10px; border-right:0; border-bottom:1px solid var(--border); padding:12px 16px }
+  .brand { height:auto; margin:0; padding:2px 0; border-bottom:0 }
+  .segmented { max-width:100%; overflow-x:auto }
   .sidebar nav { display:flex; gap:4px; overflow-x:auto; order:3; width:100% }
   .nav-label { display:none }
   .side-footer { margin:0 0 0 auto; display:flex; gap:8px }
   .side-card { display:none }
-  .topbar { padding:10px 16px; position:static }
+  .topbar { height:auto; min-height:var(--topbar-h); padding:10px 16px; position:static }
   .content { padding:18px 16px 48px }
   .answers { grid-template-columns:1fr }
 }

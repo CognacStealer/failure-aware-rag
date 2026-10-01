@@ -25,6 +25,15 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Failure-Aware Adaptive RAG API", lifespan=lifespan)
+
+
+@app.middleware("http")
+async def revalidate_web_assets(request, call_next):
+    """Pages and static files are revalidated on every load, so UI updates show up immediately."""
+    response = await call_next(request)
+    if request.url.path in {"/", "/dashboard"} or request.url.path.startswith("/static/"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
 app.state.rag = service
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 app.include_router(health_router)

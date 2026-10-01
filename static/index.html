@@ -12,15 +12,23 @@
     .composer textarea { width:100%; min-height:96px; resize:vertical; border:1px solid var(--border); background:var(--bg-subtle); border-radius:10px; padding:12px 14px; font:inherit; color:inherit; outline:none }
     .composer textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent) }
     .controls { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:12px }
+    .controls .kbd { margin-left:auto }
     .controls label { font-size:12px; color:var(--muted); display:inline-flex; align-items:center; gap:6px }
     .controls select { width:auto }
-    .btn { border:0; border-radius:8px; height:34px; padding:0 16px; font-weight:600; cursor:pointer; background:var(--text); color:var(--bg) }
+    .btn { border:0; border-radius:8px; height:var(--control-h); padding:0 18px; font-weight:600; cursor:pointer; background:var(--text); color:var(--bg) }
     .btn:disabled { opacity:.5; cursor:not-allowed }
     .btn.ghost { background:transparent; color:var(--muted); border:1px solid var(--border) }
     .kbd { font-size:11px; color:var(--faint); margin-left:auto }
-    .examples { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px }
-    .example { border:1px solid var(--border); background:var(--card); border-radius:999px; padding:4px 12px; font-size:12px; color:var(--muted); cursor:pointer; text-align:left; max-width:100% }
+    .examples { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:8px }
+    .example { display:flex; align-items:flex-start; gap:8px; border:1px solid var(--border); background:var(--card); border-radius:10px; padding:9px 12px; font-size:12px; line-height:1.45; color:var(--muted); cursor:pointer; text-align:left; min-width:0 }
+    .example .chip { flex:none; margin:1px 0 0 }
     .example:hover { color:var(--text); border-color:var(--faint) }
+    .row-label { font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); margin-top:16px }
+    .recent { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px }
+    .recent button { border:1px solid var(--border); background:transparent; border-radius:8px; padding:4px 10px; font-size:12px; color:var(--muted); cursor:pointer; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+    .recent button:hover { color:var(--text); border-color:var(--faint) }
+    .sources { grid-template-columns:repeat(2,minmax(0,1fr)) }
+    @media (max-width:860px) { .examples, .sources { grid-template-columns:1fr } }
     .strategy-help { font-size:12px; color:var(--muted); margin-top:8px }
 
     .answer-text { font-size:15px; line-height:1.65; white-space:pre-wrap; overflow-wrap:anywhere; min-height:48px }
@@ -63,9 +71,6 @@
     .scores { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px }
     .source details { margin-top:6px; font-size:12px } .source summary { cursor:pointer; color:var(--muted) }
     .source details p { white-space:pre-wrap; margin:6px 0 0; color:var(--text) }
-    .history { display:grid; gap:4px }
-    .history button { text-align:left; border:0; background:transparent; padding:6px 8px; border-radius:6px; cursor:pointer; color:var(--muted); font-size:13px; display:flex; gap:8px }
-    .history button:hover { background:var(--hover); color:var(--text) }
     .placeholder { color:var(--faint) }
   </style>
 </head>
@@ -121,38 +126,32 @@
             <button class="btn" id="ask" type="button">Ask</button>
           </div>
           <div class="strategy-help" id="strategy-help"></div>
+          <div class="row-label">Try a benchmark question</div>
           <div class="examples" id="examples" aria-label="Example questions"></div>
+          <div id="recent-block" hidden><div class="row-label">Recent</div><div class="recent" id="history" aria-label="Recent questions"></div></div>
         </div>
       </section>
 
       <div class="grid wide-left mt">
-        <div class="grid" style="align-content:start">
-          <section class="card" aria-label="Answer">
-            <div class="card-head">
-              <div><h2>Answer</h2><p id="answer-sub">Ask a question to start</p></div>
-              <div class="answer-meta" id="answer-meta"></div>
-            </div>
-            <div class="card-body">
-              <div class="answer-text placeholder" id="answer" aria-live="polite">The answer will stream here.</div>
-              <div class="gauge" id="gauge" hidden></div>
-            </div>
-          </section>
-          <section class="card" aria-label="Sources">
-            <div class="card-head"><div><h2>Sources</h2><p id="sources-sub">Documents passed to the generator</p></div></div>
-            <div class="card-body sources" id="sources"><div class="placeholder small">No sources yet.</div></div>
-          </section>
-        </div>
-        <div class="grid" style="align-content:start">
-          <section class="card" aria-label="Live pipeline">
-            <div class="card-head"><div><h2>Live pipeline</h2><p id="pipeline-sub">Stages appear as the engine runs them</p></div></div>
-            <div class="card-body"><ol class="timeline" id="timeline"></ol></div>
-          </section>
-          <section class="card" aria-label="Recent questions">
-            <div class="card-head"><div><h2>Recent</h2><p>Stored in this browser only</p></div></div>
-            <div class="card-body history" id="history"></div>
-          </section>
-        </div>
+        <section class="card" aria-label="Answer">
+          <div class="card-head">
+            <div><h2>Answer</h2><p id="answer-sub">Ask a question to start</p></div>
+            <div class="answer-meta" id="answer-meta"></div>
+          </div>
+          <div class="card-body">
+            <div class="answer-text placeholder" id="answer" aria-live="polite">The answer will stream here.</div>
+            <div class="gauge" id="gauge" hidden></div>
+          </div>
+        </section>
+        <section class="card" aria-label="Live pipeline">
+          <div class="card-head"><div><h2>Live pipeline</h2><p id="pipeline-sub">Stages appear as the engine runs them</p></div></div>
+          <div class="card-body"><ol class="timeline" id="timeline"></ol></div>
+        </section>
       </div>
+      <section class="card mt" aria-label="Sources">
+        <div class="card-head"><div><h2>Sources</h2><p id="sources-sub">Documents passed to the generator</p></div></div>
+        <div class="card-body grid sources" id="sources"><div class="placeholder small">No sources yet.</div></div>
+      </section>
     </div>
   </div>
 </div>
@@ -212,7 +211,7 @@ checkEngine(); setInterval(checkEngine, 15000);
 async function loadExamples() {
   try {
     const items = await (await fetch('/engine/examples?count=4')).json();
-    $('examples').innerHTML = items.map(e => `<button class="example" type="button" data-q="${esc(e.question)}"><span class="chip">${esc(e.category.replaceAll('_', ' '))}</span>${esc(e.question.length > 110 ? e.question.slice(0, 107) + '…' : e.question)}</button>`).join('');
+    $('examples').innerHTML = items.map(e => `<button class="example" type="button" data-q="${esc(e.question)}"><span class="chip">${esc(e.category.replaceAll('_', ' '))}</span><span>${esc(e.question.length > 140 ? e.question.slice(0, 137) + '…' : e.question)}</span></button>`).join('');
     $('examples').querySelectorAll('.example').forEach(b => b.onclick = () => { $('query').value = b.dataset.q; ask(); });
   } catch {}
 }
@@ -222,7 +221,8 @@ loadExamples();
 function history() { try { return JSON.parse(store.get('rag-lab-history') || '[]'); } catch { return []; } }
 function renderHistory() {
   const items = history();
-  $('history').innerHTML = items.length ? items.map((h, i) => `<button type="button" data-i="${i}"><span class="chip">${esc(h.strategy)}</span>${esc(h.query.length > 80 ? h.query.slice(0, 77) + '…' : h.query)}</button>`).join('') : '<div class="placeholder small">Your questions will appear here.</div>';
+  $('recent-block').hidden = !items.length;
+  $('history').innerHTML = items.map((h, i) => `<button type="button" data-i="${i}" title="${esc(h.query)}">${esc(h.query.length > 60 ? h.query.slice(0, 57) + '…' : h.query)}</button>`).join('');
   $('history').querySelectorAll('button').forEach(b => b.onclick = () => { const h = items[+b.dataset.i]; $('query').value = h.query; setStrategy(h.strategy); $('query').focus(); });
 }
 function remember(query) {
