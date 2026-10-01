@@ -129,8 +129,9 @@ def main() -> None:
     def routed_recall(row: dict, fast_threshold: float) -> tuple[float, float]:
         fast = row["p_success"] >= fast_threshold
         recall_value = row["hybrid_recall"] if fast else row["crag_recall"]
-        # The adaptive pipeline always runs hybrid first; Corrective adds the rerank on top.
-        seconds = row["hybrid_seconds"] + (0 if fast else row["crag_seconds"])
+        # The adaptive pipeline retrieves the Corrective pool once, so the Corrective track costs
+        # exactly what CRAG costs (crag_seconds already includes its hybrid retrieval).
+        seconds = row["hybrid_seconds"] if fast else row["crag_seconds"]
         return recall_value, seconds
 
     sweep = []
@@ -164,7 +165,7 @@ def main() -> None:
                 "hybrid": {"recall": float(np.mean([r["hybrid_recall"] for r in answerable])),
                            "seconds": float(np.mean([r["hybrid_seconds"] for r in answerable]))},
                 "crag": {"recall": float(np.mean([r["crag_recall"] for r in answerable])),
-                         "seconds": float(np.mean([r["hybrid_seconds"] + r["crag_seconds"] for r in answerable]))},
+                         "seconds": float(np.mean([r["crag_seconds"] for r in answerable]))},
                 "adaptive": {"recall": float(np.mean([v for v, _ in adaptive])),
                              "seconds": float(np.mean([s for _, s in adaptive]))},
             },

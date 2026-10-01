@@ -12,7 +12,11 @@ class AdaptivePipeline:
         self.generator = generator
 
     def run(self, query: str, top_k: int) -> dict[str, Any]:
-        candidates = self.hybrid.retrieve(query, top_k)
+        # Retrieve the Corrective track's wider pool once. Fusion output is a ranked list,
+        # so its top_k prefix is what plain hybrid retrieval returns; the calibrator and the
+        # Fast track use that prefix, and the rerank reuses the pool instead of retrieving again.
+        pool = self.hybrid.retrieve(query, self.crag.pool_size(top_k))
+        candidates = pool[:top_k]
         signals = self.calibrator.extract_signals(query, candidates)
         mean, std = self.calibrator.predict_distribution(signals)
         decision = self.router.route(mean, std)
@@ -24,7 +28,7 @@ class AdaptivePipeline:
             documents = candidates
             answer = self.generator.generate(query, documents)
         else:
-            documents = self.crag.retrieve_corrected(query, top_k)
+            documents = self.crag.rerank(query, pool, top_k)
             answer = self.generator.generate(query, documents)
 
         return {

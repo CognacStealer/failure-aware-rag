@@ -16,9 +16,14 @@ class CRAGPipeline:
         self.generator = generator
         self.retrieval_multiplier = retrieval_multiplier
 
-    def retrieve_corrected(self, query: str, top_k: int) -> list[dict[str, Any]]:
-        candidates = self.hybrid.retrieve(query, top_k * self.retrieval_multiplier)
+    def pool_size(self, top_k: int) -> int:
+        return top_k * self.retrieval_multiplier
+
+    def rerank(self, query: str, candidates: list[dict[str, Any]], top_k: int) -> list[dict[str, Any]]:
         return self.corrector.correct(query, candidates, top_k)
+
+    def retrieve_corrected(self, query: str, top_k: int) -> list[dict[str, Any]]:
+        return self.rerank(query, self.hybrid.retrieve(query, self.pool_size(top_k)), top_k)
 
     def run(self, query: str, top_k: int) -> dict[str, Any]:
         documents = self.retrieve_corrected(query, top_k)

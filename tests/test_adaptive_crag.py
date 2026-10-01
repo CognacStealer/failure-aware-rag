@@ -116,13 +116,13 @@ class AdaptivePipelineTests(unittest.TestCase):
         self.assertEqual(result["track"], "Fast")
         self.assertEqual(result["answer"], "generated answer")
         self.assertEqual(len(generator.calls), 1)
-        self.assertEqual(hybrid.calls, [("alpha", 1)])
+        self.assertEqual(hybrid.calls, [("alpha", 2)])  # one retrieval of the Corrective pool
 
     def test_corrective_track_uses_crag_candidate_pool(self):
         pipeline, hybrid, generator = self._pipeline(0.55, 0.05)
         result = pipeline.run("alpha", 1)
         self.assertEqual(result["track"], "Corrective")
-        self.assertEqual(hybrid.calls, [("alpha", 1), ("alpha", 2)])
+        self.assertEqual(hybrid.calls, [("alpha", 2)])  # the rerank reuses the pool, no second retrieval
         self.assertEqual(len(generator.calls), 1)
 
     def test_abstain_track_skips_generation(self):

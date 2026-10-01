@@ -57,7 +57,7 @@ def run(service: Any, query: str, top_k: int, strategy: str) -> Iterator[dict[st
 
     # Corrective paths rerank a wider candidate pool; RRF output is a sorted list,
     # so the top_k prefix of the wide pool is exactly what plain hybrid returns.
-    pool = top_k * service.crag.retrieval_multiplier if strategy in {"crag", "adaptive"} else top_k
+    pool = service.crag.pool_size(top_k) if strategy in {"crag", "adaptive"} else top_k
     depth = max(pool, getattr(config, "RRF_CANDIDATES", pool))
 
     yield {"type": "stage", "stage": "dense", "status": "running"}
@@ -107,7 +107,7 @@ def run(service: Any, query: str, top_k: int, strategy: str) -> Iterator[dict[st
         if strategy == "crag" or track == "Corrective":
             yield {"type": "stage", "stage": "rerank", "status": "running"}
             t0 = time.perf_counter()
-            documents = service.crag.corrector.correct(query, candidates, top_k)
+            documents = service.crag.rerank(query, candidates, top_k)
             yield finish("rerank", t0, candidates=len(candidates), kept=len(documents),
                          top=[_doc_view(d) for d in documents[:PREVIEW_DOCS]])
         else:

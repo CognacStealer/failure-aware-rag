@@ -63,8 +63,9 @@ def main() -> None:
         decision = service.router.route(*service.calibrator.predict_distribution(signals))
         used = {"Fast": timed["hybrid"], "Corrective": timed["crag"], "Abstain": []}[decision.track]
         tracks[decision.track].append(question)
-        # Adaptive always runs hybrid; the Corrective track adds the rerank on top of it.
-        latencies["adaptive"].append(latencies["hybrid"][-1] + (latencies["crag"][-1] if decision.track == "Corrective" else 0.0))
+        # Adaptive retrieves the Corrective pool once: the Corrective track costs what CRAG costs
+        # (one hybrid retrieval of the pool + the rerank); other tracks cost one hybrid retrieval.
+        latencies["adaptive"].append(latencies["crag"][-1] if decision.track == "Corrective" else latencies["hybrid"][-1])
         if gold:
             results["adaptive"].append(recall(used, gold))
             ranks["adaptive"]["mrr"].append(reciprocal_rank(used, gold))
