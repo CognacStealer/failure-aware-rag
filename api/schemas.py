@@ -25,7 +25,11 @@ class Confidence(BaseModel):
 class RetrievedDocument(BaseModel):
     doc_id: str
     title: str = ""
-    rrf_score: float
+    # Each score is present only when the strategy produced it.
+    rrf_score: float | None = None
+    dense_score: float | None = None
+    bm25_score: float | None = None
+    relevance_score: float | None = None
 
 
 class QueryResponse(BaseModel):
@@ -34,3 +38,14 @@ class QueryResponse(BaseModel):
     answer: str
     confidence: Confidence | None = None
     retrieved_docs: list[RetrievedDocument]
+
+
+class CalibrationExample(BaseModel):
+    # Keys are RetrievalCalibrator.FEATURE_NAMES, as produced by extract_signals.
+    signals: dict[str, float]
+    # 1 when the retrieved set contained all gold documents, else 0.
+    label: int = Field(ge=0, le=1)
+
+
+class CalibrationRefitRequest(BaseModel):
+    examples: list[CalibrationExample] = Field(min_length=2)

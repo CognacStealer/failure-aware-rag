@@ -1,12 +1,18 @@
 fastapi
 uvicorn[standard]
 chromadb
-rank-bm25
+scipy
+scikit-learn
+joblib
+numpy
+pydantic
+# CRAG cross-encoder reranker
 sentence-transformers
+# Optional GPU generator backend (GENERATOR_BACKEND=transformers)
 transformers
 accelerate
 bitsandbytes; platform_system == "Linux"
-scikit-learn
-joblib
-numpy<2.0
-pydantic
+# scripts/add_gold_docs.py
+datasets
+# tests compare the sparse BM25 against the reference implementation
+rank-bm25
