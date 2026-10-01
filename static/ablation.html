@@ -122,13 +122,13 @@
 
       <!-- DIAGNOSTICS -->
       <section class="view" id="view-diagnostics" hidden>
-        <div class="page-head"><h1>Diagnostics</h1><p>When an answer is wrong, was it retrieval or generation? For every question the judge checks which gold facts actually reached the model's context; each wrong answer is then traced back to the stage where the evidence was lost.</p></div>
+        <div class="page-head"><h1>Diagnostics</h1><p>When an answer is wrong, was it retrieval or generation? For every question a cross-encoder checks which gold facts actually reached the model's context; each wrong answer is then traced back to the stage where the evidence was lost.</p></div>
         <div id="diag-missing" class="card empty" hidden>Waiting for the first context checks from the running comparison.</div>
         <div id="diag-body">
           <div class="grid kpis">
             <div class="card kpi"><div class="kpi-label">Context fact recall</div><div class="kpi-value num" id="d-cfr">–</div><div class="kpi-caption">average share of gold facts present in the model's context</div></div>
             <div class="card kpi"><div class="kpi-label">Evidence reached the model</div><div class="kpi-value num" id="d-evidence">–</div><div class="kpi-caption" id="d-evidence-cap">–</div></div>
-            <div class="card kpi"><div class="kpi-label">Context judge false positives</div><div class="kpi-value num" id="d-fp">–</div><div class="kpi-caption" id="d-fp-cap">facts credited to another question's context (ideal 0%)</div></div>
+            <div class="card kpi"><div class="kpi-label">Context check false positives</div><div class="kpi-value num" id="d-fp">–</div><div class="kpi-caption" id="d-fp-cap">facts credited to another question's context (ideal 0%)</div></div>
             <div class="card kpi"><div class="kpi-label">Questions diagnosed</div><div class="kpi-value num" id="d-n">–</div><div class="kpi-caption">graded by every model and context-checked</div></div>
           </div>
           <div class="card mt">
@@ -307,7 +307,7 @@ function renderOverview(models) {
     const lead = ranked[0];
     const pairs = Object.values(sum.paired_leaderboard_differences || {}).filter(x => x.first === lead || x.second === lead);
     const clear = pairs.length && pairs.every(x => x.significant && ((x.first === lead) === (x.mean_difference > 0)));
-    $('k-lead').innerHTML = `<span class="swatch" style="background:${colorOf[lead]};margin-right:9px;width:11px;height:11px"></span>${esc(short(lead))}`;
+    $('k-lead').innerHTML = `<span class="swatch" style="background:${colorOf[lead]};width:11px;height:11px"></span><span class="ellipsis" title="${esc(short(lead))}">${esc(short(lead))}</span>`;
     $('k-lead-cap').textContent = `score ${fix(sum.models[lead].leaderboard_score)} · ${clear ? 'ahead of every model (significant)' : 'lead not yet significant'}`;
   }
   const j = sum.judge_sanity;

@@ -316,7 +316,7 @@ def _section_ablation(entry: dict[str, Any]) -> list[str]:
         lines += [
             "### Why answers fail",
             "",
-            f"For {attribution['questions']} questions the judge checked which gold facts reached each model's",
+            f"For {attribution['questions']} questions a cross-encoder checked which gold facts reached each model's",
             f"context ({attribution['context_fact_recall']:.0%} on average; "
             f"{attribution['evidence_in_context_rate']:.0%} of questions had at least "
             f"{attribution['evidence_threshold']:.0%} of their facts in context). Each wrong answer is traced to the",

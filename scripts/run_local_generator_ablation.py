@@ -139,29 +139,25 @@ def context_of(prompt: str) -> str:
     return prompt[start + len("Context:\n"):end] if start != -1 and end > start else prompt
 
 
-def context_facts_prompt(question: dict, context: str, facts: list[str]) -> str:
-    listed = "\n".join(f"{i}. {fact}" for i, fact in enumerate(facts, 1))
-    return (
-        "You check which facts a set of retrieved documents states.\n"
-        f"- present: the numbers (1-{len(facts)}) of the facts below that the documents themselves state, "
-        "even if worded differently. Leave a fact out if the documents do not state it. Use [] if none.\n"
-        'Return JSON only: {"present": [fact numbers]}\n\n'
-        f"Question (for reference only): {question['question']}\n\n"
-        f"Facts:\n{listed}\n\nDocuments:\n{context}"
-    )
+# Fact presence in the model's context is scored by the cross-encoder, not the LLM judge.
+# On 25 questions x 142 facts with negative controls (another question's context), the
+# 8B judge marked 79% of facts present in the right context and 72% in an unrelated one
+# (no separation), while the cross-encoder separated them with AUC 0.884; at 0.1 it
+# credits 3% of facts in unrelated contexts. It is conservative: reworded facts may be missed.
+CONTEXT_FACT_THRESHOLD = 0.1
+DOC_SPLIT = re.compile(r"(?:^|\n\n)Doc \d+: ")
 
 
-def grade_context(args, question: dict, prompt: str) -> dict:
+def grade_context(scorer, question: dict, prompt: str) -> dict:
     """Which gold facts reached the model's context: separates retrieval/context loss from generation errors."""
-    facts, context = question["facts"], context_of(prompt)
-    batches = [facts[i:i + FACTS_PER_JUDGE_CALL] for i in range(0, len(facts), FACTS_PER_JUDGE_CALL)]
-    present, parse_ok = [], True
-    for batch in batches:
-        verdict, ok, _ = _judge_call(args, context_facts_prompt(question, context, batch), len(batch))
-        parse_ok &= ok
-        present += [(i in verdict["present"]) if ok else None for i in range(1, len(batch) + 1)]
-    return {"facts_in_context": present, "facts_ungraded": sum(f is None for f in present),
-            "judge_parse_ok": parse_ok, "judge_calls": len(batches)}
+    blocks = [block.strip() for block in DOC_SPLIT.split(context_of(prompt)) if block.strip()]
+    scores = [max(scorer([(fact, block) for block in blocks])) if blocks else 0.0 for fact in question["facts"]]
+    return {
+        "facts_in_context": [score >= CONTEXT_FACT_THRESHOLD for score in scores],
+        "fact_scores": [round(float(score), 4) for score in scores],
+        "method": "cross-encoder",
+        "threshold": CONTEXT_FACT_THRESHOLD,
+    }
 
 
 def strip_citations(answer: str) -> str:
@@ -227,6 +223,7 @@ def run(args) -> None:
     run_dir.mkdir(parents=True, exist_ok=True)
     service = RAGService()
     service.initialize()
+    scorer = service.crag.corrector.scorer  # cross-encoder for context-fact checks
     questions = load_all_questions(service.client)
     random.Random(args.seed).shuffle(questions)
     questions = questions[: args.limit]
@@ -314,16 +311,14 @@ def run(args) -> None:
             qid = question["question_id"]
             if qid not in context_done:
                 t0 = time.time()
-                graded = grade_context(args, question, retrieved[qid]["prompt"])
+                graded = grade_context(scorer, question, retrieved[qid]["prompt"])
                 append_jsonl(context_path, {"question_id": qid, **graded, "seconds": round(time.time() - t0, 2)})
-                unload(args.host, args.judge_model)
             if qid in sanity_ids and qid not in controls_done and len(chunk) > 1:
                 # Negative control: another question's context should state ~none of these facts;
                 # what the judge credits there is its false-positive rate for context facts.
                 other = chunk[(index + 1) % len(chunk)]["question_id"]
-                negative = grade_context(args, question, retrieved[other]["prompt"])
+                negative = grade_context(scorer, question, retrieved[other]["prompt"])
                 append_jsonl(context_controls_path, {"question_id": qid, "context_of": other, **negative})
-                unload(args.host, args.judge_model)
 
         sanity_done = read_jsonl(sanity_path)
         for question in chunk:
