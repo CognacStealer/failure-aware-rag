@@ -12,7 +12,7 @@ from collections import defaultdict
 import numpy as np
 
 import config
-from benchmark import load_questions, recall
+from benchmark import load_questions, ndcg, recall, reciprocal_rank
 from core.results_store import save_result
 from core.service import RAGService
 
@@ -37,6 +37,8 @@ def main() -> None:
     results = defaultdict(list)
     tracks = defaultdict(list)
     seconds = defaultdict(float)
+    latencies = defaultdict(list)
+    ranks = defaultdict(lambda: defaultdict(list))  # strategy -> metric -> values
     per_question = []
     for question in questions:
         text, gold = question["question"], question["gold"]
@@ -49,16 +51,24 @@ def main() -> None:
         ):
             started = time.perf_counter()
             timed[name] = fetch()
-            seconds[name] += time.perf_counter() - started
+            elapsed = time.perf_counter() - started
+            seconds[name] += elapsed
+            latencies[name].append(elapsed)
             if gold:
                 results[name].append(recall(timed[name], gold))
+                ranks[name]["mrr"].append(reciprocal_rank(timed[name], gold))
+                ranks[name]["ndcg"].append(ndcg(timed[name], gold, k))
 
         signals = service.calibrator.extract_signals(text, timed["hybrid"])
         decision = service.router.route(*service.calibrator.predict_distribution(signals))
         used = {"Fast": timed["hybrid"], "Corrective": timed["crag"], "Abstain": []}[decision.track]
         tracks[decision.track].append(question)
+        # Adaptive always runs hybrid; the Corrective track adds the rerank on top of it.
+        latencies["adaptive"].append(latencies["hybrid"][-1] + (latencies["crag"][-1] if decision.track == "Corrective" else 0.0))
         if gold:
             results["adaptive"].append(recall(used, gold))
+            ranks["adaptive"]["mrr"].append(reciprocal_rank(used, gold))
+            ranks["adaptive"]["ndcg"].append(ndcg(used, gold, k))
         per_question.append({
             "question_id": question["question_id"],
             "type": question["type"],
@@ -68,16 +78,18 @@ def main() -> None:
             "confidence_std": round(decision.std, 4),
             **{f"{name}_recall": recall(docs, gold) for name, docs in timed.items()},
             "adaptive_recall": recall(used, gold),
+            **{f"{name}_mrr": reciprocal_rank(docs, gold) for name, docs in {**timed, "adaptive": used}.items()},
+            **{f"{name}_seconds": round(latencies[name][-1], 3) for name in (*timed, "adaptive")},
         })
 
     answerable = sum(1 for q in questions if q["gold"])
     print(f"split={args.split}  questions={len(questions)}  answerable={answerable}  top_k={k}\n")
-    print(f"{'strategy':<10} {'recall@k':>9} {'hit':>6} {'complete':>9} {'s/query':>8}")
+    print(f"{'strategy':<10} {'recall@k':>9} {'MRR':>6} {'nDCG':>6} {'hit':>6} {'complete':>9} {'p50 s':>7} {'p95 s':>7}")
     for name in ("vanilla", "bm25", "hybrid", "crag", "adaptive"):
         values = np.array(results[name])
-        per_query = seconds[name] / max(len(questions), 1)
-        timing = f"{per_query:>8.2f}" if name in seconds else f"{'':>8}"
-        print(f"{name:<10} {values.mean():>9.3f} {np.mean(values > 0):>6.3f} {np.mean(values == 1):>9.3f} {timing}")
+        p50, p95 = np.percentile(latencies[name], [50, 95])
+        print(f"{name:<10} {values.mean():>9.3f} {np.mean(ranks[name]['mrr']):>6.3f} {np.mean(ranks[name]['ndcg']):>6.3f} "
+              f"{np.mean(values > 0):>6.3f} {np.mean(values == 1):>9.3f} {p50:>7.2f} {p95:>7.2f}")
 
     print("\nadaptive routing (abstaining counts as recall 0 above):")
     for track in ("Fast", "Corrective", "Abstain"):
@@ -88,11 +100,16 @@ def main() -> None:
     strategies = {}
     for name in ("vanilla", "bm25", "hybrid", "crag", "adaptive"):
         values = np.array(results[name])
+        p50, p95 = np.percentile(latencies[name], [50, 95])
         strategies[name] = {
             "recall_at_k": float(values.mean()),
+            "mrr": float(np.mean(ranks[name]["mrr"])),
+            "ndcg_at_k": float(np.mean(ranks[name]["ndcg"])),
             "hit_rate": float(np.mean(values > 0)),
             "complete_rate": float(np.mean(values == 1)),
-            "seconds_per_query": seconds[name] / max(len(questions), 1) if name in seconds else None,
+            "seconds_mean": float(np.mean(latencies[name])),
+            "seconds_p50": float(p50),
+            "seconds_p95": float(p95),
         }
     directory = save_result(
         "retrieval_eval",

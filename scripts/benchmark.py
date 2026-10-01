@@ -5,6 +5,7 @@ numbers come from the test split, so they are not in-sample.
 """
 
 import hashlib
+import math
 from typing import Any
 
 import config
@@ -47,6 +48,27 @@ def recall(documents: list[dict[str, Any]], gold: list[str]) -> float | None:
     if not gold:
         return None
     return len({doc["doc_id"] for doc in documents} & set(gold)) / len(set(gold))
+
+
+def reciprocal_rank(documents: list[dict[str, Any]], gold: list[str]) -> float | None:
+    """1/rank of the first gold document (0 if none retrieved): rewards putting evidence first."""
+    if not gold:
+        return None
+    gold_set = set(gold)
+    for rank, doc in enumerate(documents, 1):
+        if doc["doc_id"] in gold_set:
+            return 1.0 / rank
+    return 0.0
+
+
+def ndcg(documents: list[dict[str, Any]], gold: list[str], k: int) -> float | None:
+    """Binary-relevance nDCG@k: 1.0 when every gold document sits at the top, in any order."""
+    if not gold:
+        return None
+    gold_set = set(gold)
+    dcg = sum(1.0 / math.log2(rank + 1) for rank, doc in enumerate(documents[:k], 1) if doc["doc_id"] in gold_set)
+    ideal = sum(1.0 / math.log2(rank + 1) for rank in range(1, min(len(gold_set), k) + 1))
+    return dcg / ideal
 
 
 def retrieval_succeeded(documents: list[dict[str, Any]], question: dict[str, Any]) -> int:
