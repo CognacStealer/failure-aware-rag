@@ -4,7 +4,8 @@ import os
 from pathlib import Path
 
 
-CHROMA_PATH = os.getenv("CHROMA_PATH", "/home/tsuki/Desktop/ChromaDB/Data")
+# Default: a "Data" folder next to this repository (the author's layout); override per machine.
+CHROMA_PATH = os.getenv("CHROMA_PATH", str(Path(__file__).resolve().parent.parent / "Data"))
 CHROMA_DOCS_COLLECTION = os.getenv("CHROMA_DOCS_COLLECTION", "docs")
 CHROMA_QUESTIONS_COLLECTION = os.getenv("CHROMA_QUESTIONS_COLLECTION", "Questions")
 # Must match the model the docs collection was embedded with (Chroma's default).

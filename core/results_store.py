@@ -34,8 +34,38 @@ KINDS = {
 }
 
 
+REPO = Path(__file__).resolve().parent.parent
+
+
 def _root() -> Path:
     return config.RESULTS_DIR
+
+
+def portable(value: Any) -> Any:
+    """Paths relative to the repository (or ~), so saved results carry no machine-specific paths."""
+    if isinstance(value, dict):
+        return {key: portable(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [portable(item) for item in value]
+    if isinstance(value, Path):
+        value = str(value)
+    if isinstance(value, str):
+        value = value.replace(f"{REPO}/", "").replace(str(REPO), ".")
+        return value.replace(str(Path.home()), "~")
+    return value
+
+
+def machine() -> dict[str, Any]:
+    """Hardware that produced a result: useful to readers, unlike a host name."""
+    info: dict[str, Any] = {"os": platform.system(), "python": platform.python_version()}
+    try:
+        cpu = next(line for line in Path("/proc/cpuinfo").read_text().splitlines() if line.startswith("model name"))
+        info["cpu"] = " ".join(cpu.split(":", 1)[1].replace("(R)", "").replace("(TM)", "").split())
+        kb = next(line for line in Path("/proc/meminfo").read_text().splitlines() if line.startswith("MemTotal"))
+        info["ram_gb"] = round(int(kb.split()[1]) / 1024**2)
+    except (OSError, StopIteration, ValueError):
+        info["cpu"] = platform.processor() or None
+    return info
 
 
 def _git() -> dict[str, Any]:
@@ -104,7 +134,7 @@ def save_result(
     directory = _root() / kind / result_id
     directory.mkdir(parents=True, exist_ok=False)
 
-    write_json(directory / "result.json", result)
+    write_json(directory / "result.json", portable(result))
     for name, rows in (tables or {}).items():
         write_csv(directory / f"{name}.csv", rows)
     for name, source in (files or {}).items():
@@ -116,10 +146,9 @@ def save_result(
         "created_at": created.isoformat(),
         "headline": headline,
         "git": _git(),
-        "command": sys.argv,
-        "python": platform.python_version(),
-        "host": platform.node(),
-        "config": config_snapshot(),
+        "command": portable(sys.argv),
+        "machine": machine(),
+        "config": portable(config_snapshot()),
     }
     write_json(directory / "meta.json", meta)
 
@@ -156,21 +185,169 @@ def _fmt(value: Any) -> str:
     return f"{value:.3f}" if isinstance(value, float) else str(value)
 
 
+def _load(entry: dict[str, Any]) -> dict[str, Any]:
+    return json.loads((_root() / entry["path"] / "result.json").read_text(encoding="utf-8"))
+
+
+def _link(entry: dict[str, Any], label: str = "folder") -> str:
+    return f"[{label}]({entry['path']})"
+
+
+def _section_retrieval(entry: dict[str, Any]) -> list[str]:
+    r = _load(entry)
+    names = {"vanilla": "Vanilla (dense)", "bm25": "BM25", "hybrid": "Hybrid (RRF)", "crag": "CRAG (rerank)",
+             "adaptive": "Adaptive (calibrated)"}
+    rows = [(names.get(k, k), v) for k, v in r["strategies"].items()]
+    recalls = [f"{v['recall_at_k']:.3f}" for _, v in rows]
+    routing = r.get("routing", {})
+    return [
+        "## Retrieval",
+        "",
+        f"Recall@{r['top_k']} on {r['answerable']} answerable **held-out** questions: the share of each question's",
+        "gold documents among the documents handed to the generator.",
+        "",
+        "| Strategy | Recall@10 | Found ≥1 gold doc | Found all gold docs |",
+        "|---|---:|---:|---:|",
+        *[f"| {name} | **{v['recall_at_k']:.3f}** | {v['hit_rate']:.1%} | {v['complete_rate']:.1%} |" for name, v in rows],
+        "",
+        "```mermaid",
+        "xychart-beta",
+        '    title "Recall@10, held-out questions"',
+        f"    x-axis [{', '.join(n.split(' ')[0] for n, _ in rows)}]",
+        '    y-axis "recall@10" 0 --> 1',
+        f"    bar [{', '.join(recalls)}]",
+        "```",
+        "",
+        f"Adaptive routing sent {routing.get('Fast', {}).get('count', 0)} questions down the fast path, "
+        f"{routing.get('Corrective', {}).get('count', 0)} to cross-encoder correction and "
+        f"{routing.get('Abstain', {}).get('count', 0)} to abstention. {_link(entry, 'Per-question data')}",
+        "",
+    ]
+
+
+def _section_calibrator(training: dict[str, Any] | None, evaluation: dict[str, Any] | None) -> list[str]:
+    lines = ["## Calibrator", "",
+             "Predicts, before answering, whether retrieval found every gold document; the router uses it",
+             "to answer fast, rerank first, or abstain.", ""]
+    if training:
+        t = _load(training)["test"]
+        suggested = _load(training).get("suggested_thresholds", {})
+        lines += [
+            "| Held-out metric | Calibrator | Constant guess |",
+            "|---|---:|---:|",
+            f"| AUC (0.5 = chance) | **{t['auc']:.3f}** | 0.500 |",
+            f"| Brier score (lower is better) | **{t['brier']:.3f}** | {t['brier_constant']:.3f} |",
+            "",
+            f"Suggested thresholds from out-of-fold training predictions: fast path if p ≥ "
+            f"{suggested.get('fast_mean', float('nan')):.2f}; "
+            + (f"abstain below {suggested['abstain_mean']:.2f}. " if suggested.get("abstain_mean")
+               else "no confidence cutoff justified abstaining, so abstention is left to model uncertainty. ")
+            + _link(training, "Training run and model file"),
+            "",
+        ]
+    if evaluation:
+        e = _load(evaluation)["test"]
+        st = e["strategies"]
+        saved = 1 - st["adaptive"]["seconds"] / st["crag"]["seconds"]
+        lines += [
+            "| Policy | Recall@10 | Retrieval time per query |",
+            "|---|---:|---:|",
+            f"| Never rerank (hybrid) | {st['hybrid']['recall']:.3f} | {st['hybrid']['seconds']:.2f} s |",
+            f"| Always rerank (CRAG) | {st['crag']['recall']:.3f} | {st['crag']['seconds']:.2f} s |",
+            f"| **Calibrated routing** | **{st['adaptive']['recall']:.3f}** | **{st['adaptive']['seconds']:.2f} s** |",
+            "",
+            f"Routing keeps {st['adaptive']['recall'] / st['crag']['recall']:.1%} of always-rerank recall and saves "
+            f"{saved:.0%} of its retrieval time. {_link(evaluation, 'Evaluation data')}",
+            "",
+        ]
+    elif training:
+        lines += ["*Cost-vs-quality evaluation of the routing is running.*", ""]
+    return lines
+
+
+def _section_ablation(entry: dict[str, Any]) -> list[str]:
+    r = _load(entry)
+    summary, manifest = r["summary"], r["manifest"]
+    n, total = summary["questions_judged_by_all_models"], manifest["question_count"]
+    models = sorted(summary["models"].items(), key=lambda kv: -kv[1]["leaderboard_score"])
+    lines = [
+        "## Generator comparison",
+        "",
+        f"Same retrieved context for every model; answers graded by an independent judge "
+        f"(`{summary['judge_model']}`). **{n} of {total} questions graded so far.**",
+        "",
+        "| Model | Correct | Facts stated | Score | 95% interval | Avg. answer time |",
+        "|---|---:|---:|---:|---|---:|",
+        *[f"| {m.split('/')[-1]} | {v['correctness']:.0%} | {v['completeness']:.0%} | **{v['leaderboard_score']:.2f}** "
+          f"| {v['leaderboard_95ci'][0]:.2f} – {v['leaderboard_95ci'][1]:.2f} | {v['mean_generation_seconds']:.0f} s |"
+          for m, v in models],
+        "",
+        "Score = correct × share of gold facts stated.",
+        "",
+    ]
+    pairs = summary.get("paired_leaderboard_differences", {})
+    if pairs:
+        lines += ["| Comparison | Score difference | 95% interval | Verdict |", "|---|---:|---|---|"]
+        for pair in pairs.values():
+            first, second = pair["first"].split("/")[-1], pair["second"].split("/")[-1]
+            low, high = pair["95ci"]
+            verdict = "real difference" if pair["significant"] else "not yet distinguishable"
+            lines.append(f"| {first} vs {second} | {pair['mean_difference']:+.2f} | {low:+.2f} – {high:+.2f} | {verdict} |")
+        lines.append("")
+    sanity = summary.get("judge_sanity")
+    if sanity:
+        lines += [
+            f"Judge check on {sanity['n']} questions: gold answers judged correct "
+            f"{sanity['gold_answer_marked_correct']:.0%}; another question's answer judged correct "
+            f"{sanity['wrong_answer_marked_correct']:.0%} ({sanity['wrong_answer_facts_present']:.0%} of its facts "
+            f"falsely credited). {_link(entry, 'Answers, judgments and per-question table')}",
+            "",
+        ]
+    return lines
+
+
+def _optional(render, *args) -> list[str]:
+    """A section that cannot be rendered (e.g. an older or partial result) is left out, never fatal."""
+    try:
+        return render(*args)
+    except (KeyError, TypeError, ValueError, IndexError, ZeroDivisionError, OSError):
+        return []
+
+
+def rebuild_readme() -> None:
+    _write_readme(list_results())
+
+
 def _write_readme(index: list[dict[str, Any]]) -> None:
+    latest_of = {}
+    for entry in index:  # newest first
+        latest_of.setdefault(entry["kind"], entry)
     lines = [
         "# Results",
         "",
-        "Generated by `core/results_store.py` - do not edit by hand. Each row is a folder with",
-        "`result.json`, per-question CSVs and `meta.json` (git commit, config snapshot, command).",
+        "Every experiment saved by this repository, newest first. Each folder holds `result.json` (metrics),",
+        "per-question CSVs and `meta.json` (git commit, configuration and hardware it was produced on).",
+        "This page is generated by `core/results_store.py`; reproduce any result with `scripts/run_pipeline.sh`",
+        "(see [docs/WORKFLOW.md](../docs/WORKFLOW.md)).",
         "",
-        "| Created (UTC) | Kind | Title | Headline | Folder |",
+    ]
+    if "retrieval_eval" in latest_of:
+        lines += _optional(_section_retrieval, latest_of["retrieval_eval"])
+    if "calibrator_training" in latest_of or "calibrator_eval" in latest_of:
+        lines += _optional(_section_calibrator, latest_of.get("calibrator_training"), latest_of.get("calibrator_eval"))
+    if "generator_ablation" in latest_of:
+        lines += _optional(_section_ablation, latest_of["generator_ablation"])
+    lines += [
+        "## All saved results",
+        "",
+        "| Date (UTC) | Experiment | Headline | Folder | Commit |",
         "|---|---|---|---|---|",
     ]
     for entry in index:
-        headline = ", ".join(f"{key} {_fmt(value)}" for key, value in entry["headline"].items())
-        commit = (entry.get("git_commit") or "")[:7] + ("*" if entry.get("git_dirty") else "")
+        headline = ", ".join(f"{key.replace('_', ' ')} {_fmt(value)}" for key, value in entry["headline"].items())
+        commit = (entry.get("git_commit") or "")[:7] + (" + local changes" if entry.get("git_dirty") else "")
         lines.append(
-            f"| {entry['created_at'][:16].replace('T', ' ')} | {KINDS[entry['kind']]} | {entry['title']} "
-            f"| {headline} | [{entry['path']}]({entry['path']}) `{commit}` |"
+            f"| {entry['created_at'][:16].replace('T', ' ')} | {KINDS[entry['kind']]}: {entry['title']} "
+            f"| {headline} | {_link(entry, entry['id'])} | `{commit}` |"
         )
     (_root() / "README.md").write_text("\n".join(lines) + "\n", encoding="utf-8")

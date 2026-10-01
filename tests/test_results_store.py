@@ -52,6 +52,24 @@ class ResultsStoreTests(unittest.TestCase):
         self.assertEqual(latest_path, path)
         self.assertIsNone(results_store.latest("calibrator_eval"))
 
+    def test_readme_presents_latest_results_and_hides_machine_paths(self):
+        strategies = {name: {"recall_at_k": r, "hit_rate": r, "complete_rate": r}
+                      for name, r in [("vanilla", 0.388), ("hybrid", 0.716), ("crag", 0.73)]}
+        path = results_store.save_result(
+            "retrieval_eval", "Retrieval", {"top_k": 10, "answerable": 236, "strategies": strategies,
+                                           "routing": {"Fast": {"count": 37}}, "where": str(Path.home() / "x")},
+            headline={"hybrid": 0.716},
+        )
+        readme = (self.root / "README.md").read_text()
+        self.assertIn("## Retrieval", readme)
+        self.assertIn("| Hybrid (RRF) | **0.716** |", readme)
+        self.assertIn("bar [0.388, 0.716, 0.730]", readme)
+        self.assertEqual(json.loads((path / "result.json").read_text())["where"], "~/x")
+        meta = json.loads((path / "meta.json").read_text())
+        self.assertNotIn("host", meta)
+        self.assertIn("machine", meta)
+        self.assertNotIn(str(Path.home()), json.dumps(meta))
+
     def test_rejects_unknown_kind_and_nan(self):
         with self.assertRaises(ValueError):
             results_store.save_result("bogus", "t", {}, headline={})

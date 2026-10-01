@@ -333,7 +333,7 @@ def save_ablation(run_dir: Path, questions: list[dict], summary: dict) -> Path:
         f"Generators on {summary['questions_judged_by_all_models']}/{manifest['question_count']} questions "
         f"({run_dir.name})",
         {"run_dir": str(run_dir), "manifest": manifest, "summary": summary},
-        headline={slug(m): round(v["leaderboard_score"], 3) for m, v in summary["models"].items()}
+        headline={m.split("/")[-1]: round(v["leaderboard_score"], 3) for m, v in summary["models"].items()}
         | {"n": summary["questions_judged_by_all_models"]},
         tables={"per_question": rows},
         files=logs,
