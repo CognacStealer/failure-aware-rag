@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RAG Lab · Ask</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/app.css">
+  <style>
+    .composer textarea { width:100%; min-height:96px; resize:vertical; border:1px solid var(--border); background:var(--bg-subtle); border-radius:10px; padding:12px 14px; font:inherit; color:inherit; outline:none }
+    .composer textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent) }
+    .controls { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-top:12px }
+    .controls label { font-size:12px; color:var(--muted); display:inline-flex; align-items:center; gap:6px }
+    .controls select { width:auto }
+    .btn { border:0; border-radius:8px; height:34px; padding:0 16px; font-weight:600; cursor:pointer; background:var(--text); color:var(--bg) }
+    .btn:disabled { opacity:.5; cursor:not-allowed }
+    .btn.ghost { background:transparent; color:var(--muted); border:1px solid var(--border) }
+    .kbd { font-size:11px; color:var(--faint); margin-left:auto }
+    .examples { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px }
+    .example { border:1px solid var(--border); background:var(--card); border-radius:999px; padding:4px 12px; font-size:12px; color:var(--muted); cursor:pointer; text-align:left; max-width:100% }
+    .example:hover { color:var(--text); border-color:var(--faint) }
+    .strategy-help { font-size:12px; color:var(--muted); margin-top:8px }
+
+    .answer-text { font-size:15px; line-height:1.65; white-space:pre-wrap; overflow-wrap:anywhere; min-height:48px }
+    .answer-text.streaming::after { content:"▍"; color:var(--accent); animation:blink 1s steps(2) infinite }
+    @keyframes blink { 50% { opacity:0 } }
+    @media (prefers-reduced-motion: reduce) { .answer-text.streaming::after { animation:none } }
+    .answer-meta { display:flex; flex-wrap:wrap; gap:8px; align-items:center }
+    .gauge { margin-top:16px; padding-top:14px; border-top:1px solid var(--border) }
+    .gauge-track { position:relative; height:8px; border-radius:999px; background:var(--hover); margin:22px 0 6px }
+    .gauge-fill { position:absolute; inset:0 auto 0 0; border-radius:999px; background:var(--accent) }
+    .gauge-band { position:absolute; top:-3px; height:14px; border-radius:4px; background:color-mix(in srgb, var(--accent) 25%, transparent) }
+    .gauge-mark { position:absolute; top:-6px; width:2px; height:20px; background:var(--muted) }
+    .gauge-mark span { position:absolute; bottom:22px; transform:translateX(-50%); font-size:11px; color:var(--muted); white-space:nowrap }
+    .gauge-scale { display:flex; justify-content:space-between; font-size:11px; color:var(--faint) }
+
+    .timeline { list-style:none; margin:0; padding:0 }
+    .tl { position:relative; display:grid; grid-template-columns:22px 1fr auto; gap:4px 10px; padding:8px 0 12px }
+    .tl::before { content:""; position:absolute; left:10px; top:28px; bottom:-4px; width:2px; background:var(--grid) }
+    .tl:last-child::before { display:none }
+    .tl-icon { width:22px; height:22px; border-radius:50%; border:2px solid var(--border); display:grid; place-items:center; font-size:11px; background:var(--card); color:var(--faint); z-index:1 }
+    .tl.running .tl-icon { border-color:var(--accent); border-top-color:transparent; animation:spin .9s linear infinite }
+    @keyframes spin { to { transform:rotate(360deg) } }
+    @media (prefers-reduced-motion: reduce) { .tl.running .tl-icon { animation:none } }
+    .tl.done .tl-icon { border-color:var(--accent); background:var(--accent); color:var(--bg) }
+    .tl.skipped .tl-icon { border-style:dashed }
+    .tl-name { font-weight:600; font-size:13px }
+    .tl.pending .tl-name, .tl.skipped .tl-name { color:var(--faint) }
+    .tl-ms { font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums }
+    .tl-detail { grid-column:2 / 4; font-size:12px; color:var(--muted) }
+    .tl-detail details { margin-top:4px } .tl-detail summary { cursor:pointer }
+    .mini-list { margin:6px 0 0; padding-left:16px } .mini-list li { margin:2px 0 }
+    .sig-table td, .sig-table th { padding:3px 6px; font-size:12px }
+
+    .sources { display:grid; gap:10px }
+    .source { border:1px solid var(--border); border-radius:10px; padding:10px 12px }
+    .source-head { display:flex; gap:8px; align-items:baseline }
+    .rank { color:var(--faint); font-size:12px; font-variant-numeric:tabular-nums; min-width:18px }
+    .source-title { font-weight:600; font-size:13px }
+    .source-id { color:var(--faint); font-size:11px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace }
+    .scores { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px }
+    .source details { margin-top:6px; font-size:12px } .source summary { cursor:pointer; color:var(--muted) }
+    .source details p { white-space:pre-wrap; margin:6px 0 0; color:var(--text) }
+    .history { display:grid; gap:4px }
+    .history button { text-align:left; border:0; background:transparent; padding:6px 8px; border-radius:6px; cursor:pointer; color:var(--muted); font-size:13px; display:flex; gap:8px }
+    .history button:hover { background:var(--hover); color:var(--text) }
+    .placeholder { color:var(--faint) }
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="brand-mark">RL</div><div>RAG Lab<small>Failure-aware RAG</small></div></div>
+    <nav aria-label="Pages">
+      <div class="nav-label">Engine</div>
+      <a href="/" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Ask</a>
+      <div class="nav-label" style="margin-top:14px">Experiments</div>
+      <a href="/dashboard#overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Overview</a>
+      <a href="/dashboard#calibrator"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 14l4-4"/><path d="M3.3 19a10 10 0 1 1 17.4 0"/></svg>Calibrator</a>
+      <a href="/dashboard#answers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Answers</a>
+      <a href="/dashboard#results"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg>Results</a>
+      <a href="/docs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 18l6-6-6-6"/><path d="M8 6l-6 6 6 6"/></svg>API docs</a>
+    </nav>
+    <div class="side-footer">
+      <div class="side-card" id="engine-card">Checking engine…</div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="crumbs">RAG Lab / <b>Ask</b></div>
+      <div class="topbar-right">
+        <span class="badge" id="engine-status"><span class="dot"></span><span id="engine-text">Checking</span></span>
+        <button class="icon-btn" id="theme" type="button" aria-label="Color theme">Theme: Auto</button>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="page-head">
+        <h1>Ask your documents</h1>
+        <p>Answers come from an enterprise corpus (EnterpriseRAG-Bench: Slack, Gmail, Jira, GitHub, Confluence and more). Watch each stage of the pipeline run live: retrieval, fusion, the calibrator's confidence, routing, reranking and generation.</p>
+      </div>
+      <div class="error" id="error" role="alert" hidden></div>
+
+      <section class="card composer" aria-label="Ask a question">
+        <div class="card-body">
+          <label for="query" class="sr-only" style="position:absolute;left:-9999px">Question</label>
+          <textarea id="query" maxlength="20000" placeholder="Ask a question about the corpus…"></textarea>
+          <div class="controls">
+            <div class="segmented" role="group" aria-label="Strategy" id="strategies">
+              <button type="button" data-strategy="adaptive" aria-pressed="true">Adaptive</button>
+              <button type="button" data-strategy="crag" aria-pressed="false">CRAG</button>
+              <button type="button" data-strategy="hybrid" aria-pressed="false">Hybrid</button>
+              <button type="button" data-strategy="vanilla" aria-pressed="false">Vanilla</button>
+            </div>
+            <label>Documents <select id="topk"><option>5</option><option selected>10</option><option>15</option></select></label>
+            <span class="kbd">Ctrl + Enter</span>
+            <button class="btn ghost" id="stop" type="button" hidden>Stop</button>
+            <button class="btn" id="ask" type="button">Ask</button>
+          </div>
+          <div class="strategy-help" id="strategy-help"></div>
+          <div class="examples" id="examples" aria-label="Example questions"></div>
+        </div>
+      </section>
+
+      <div class="grid wide-left mt">
+        <div class="grid" style="align-content:start">
+          <section class="card" aria-label="Answer">
+            <div class="card-head">
+              <div><h2>Answer</h2><p id="answer-sub">Ask a question to start</p></div>
+              <div class="answer-meta" id="answer-meta"></div>
+            </div>
+            <div class="card-body">
+              <div class="answer-text placeholder" id="answer" aria-live="polite">The answer will stream here.</div>
+              <div class="gauge" id="gauge" hidden></div>
+            </div>
+          </section>
+          <section class="card" aria-label="Sources">
+            <div class="card-head"><div><h2>Sources</h2><p id="sources-sub">Documents passed to the generator</p></div></div>
+            <div class="card-body sources" id="sources"><div class="placeholder small">No sources yet.</div></div>
+          </section>
+        </div>
+        <div class="grid" style="align-content:start">
+          <section class="card" aria-label="Live pipeline">
+            <div class="card-head"><div><h2>Live pipeline</h2><p id="pipeline-sub">Stages appear as the engine runs them</p></div></div>
+            <div class="card-body"><ol class="timeline" id="timeline"></ol></div>
+          </section>
+          <section class="card" aria-label="Recent questions">
+            <div class="card-head"><div><h2>Recent</h2><p>Stored in this browser only</p></div></div>
+            <div class="card-body history" id="history"></div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fix = (x, d = 2) => x == null ? '–' : Number(x).toFixed(d);
+const pct = (x) => x == null ? '–' : `${Math.round(x * 100)}%`;
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+
+const STAGES = {
+  dense: 'Dense retrieval', bm25: 'BM25 keyword search', fusion: 'Rank fusion (RRF)', calibrator: 'Calibrator',
+  route: 'Routing decision', rerank: 'Cross-encoder rerank', generate: 'Generate answer',
+};
+const HELP = {
+  adaptive: 'Adaptive: the calibrator predicts whether retrieval found the evidence, then answers fast, reranks first, or abstains.',
+  crag: 'CRAG: always reranks a wider candidate pool with a cross-encoder before answering.',
+  hybrid: 'Hybrid: dense embeddings and BM25 keyword search fused with reciprocal rank fusion.',
+  vanilla: 'Vanilla: dense embedding search only (baseline).',
+};
+let strategy = store.get('rag-lab-strategy') || 'adaptive';
+let controller = null;
+
+/* theme (shared key with the monitor) */
+const THEMES = ['auto', 'light', 'dark'];
+let theme = store.get('rag-lab-theme') || 'auto';
+function applyTheme(t) {
+  if (t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.dataset.theme = t;
+  $('theme').textContent = `Theme: ${t[0].toUpperCase()}${t.slice(1)}`;
+}
+applyTheme(theme);
+$('theme').onclick = () => { theme = THEMES[(THEMES.indexOf(theme) + 1) % 3]; store.set('rag-lab-theme', theme); applyTheme(theme); };
+
+/* strategy picker */
+function setStrategy(s) {
+  strategy = s; store.set('rag-lab-strategy', s);
+  document.querySelectorAll('[data-strategy]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.strategy === s)));
+  $('strategy-help').textContent = HELP[s];
+}
+document.querySelectorAll('[data-strategy]').forEach(b => b.onclick = () => setStrategy(b.dataset.strategy));
+setStrategy(strategy);
+
+/* engine status */
+async function checkEngine() {
+  try {
+    const r = await fetch('/ready'); const s = await r.json();
+    const ok = s.ready && s.generator_loaded;
+    $('engine-status').className = 'badge' + (ok ? ' live' : '');
+    $('engine-text').textContent = ok ? 'Engine ready' : s.ready ? 'Generator offline' : 'Starting';
+    $('engine-card').innerHTML = `<b>${ok ? 'Engine ready' : 'Engine not ready'}</b><br>Chroma ${s.chroma_connected ? '✓' : '✕'} · BM25 ${s.bm25_built ? '✓' : '✕'}<br>Generator ${s.generator_loaded ? '✓' : '✕ (start Ollama)'}<br>Calibrator ${s.calibrator_fitted ? `✓ ${s.calibrator_examples} examples` : 'fallback'}`;
+  } catch { $('engine-text').textContent = 'Offline'; $('engine-status').className = 'badge'; }
+}
+checkEngine(); setInterval(checkEngine, 15000);
+
+/* examples */
+async function loadExamples() {
+  try {
+    const items = await (await fetch('/engine/examples?count=4')).json();
+    $('examples').innerHTML = items.map(e => `<button class="example" type="button" data-q="${esc(e.question)}"><span class="chip">${esc(e.category.replaceAll('_', ' '))}</span>${esc(e.question.length > 110 ? e.question.slice(0, 107) + '…' : e.question)}</button>`).join('');
+    $('examples').querySelectorAll('.example').forEach(b => b.onclick = () => { $('query').value = b.dataset.q; ask(); });
+  } catch {}
+}
+loadExamples();
+
+/* history */
+function history() { try { return JSON.parse(store.get('rag-lab-history') || '[]'); } catch { return []; } }
+function renderHistory() {
+  const items = history();
+  $('history').innerHTML = items.length ? items.map((h, i) => `<button type="button" data-i="${i}"><span class="chip">${esc(h.strategy)}</span>${esc(h.query.length > 80 ? h.query.slice(0, 77) + '…' : h.query)}</button>`).join('') : '<div class="placeholder small">Your questions will appear here.</div>';
+  $('history').querySelectorAll('button').forEach(b => b.onclick = () => { const h = items[+b.dataset.i]; $('query').value = h.query; setStrategy(h.strategy); $('query').focus(); });
+}
+function remember(query) {
+  const items = [{ query, strategy }, ...history().filter(h => h.query !== query)].slice(0, 8);
+  store.set('rag-lab-history', JSON.stringify(items)); renderHistory();
+}
+renderHistory();
+
+/* timeline */
+let stageState = {};
+function renderTimeline(plan) {
+  $('timeline').innerHTML = plan.map(stage => {
+    const s = stageState[stage] || { status: 'pending' };
+    const icon = { done: '✓', skipped: '–' }[s.status] || '';
+    return `<li class="tl ${s.status}"><span class="tl-icon" aria-hidden="true">${icon}</span>
+      <span class="tl-name">${esc(STAGES[stage])}</span><span class="tl-ms">${s.ms != null ? s.ms + ' ms' : s.status === 'running' ? 'running' : ''}</span>
+      <div class="tl-detail">${stageDetail(stage, s)}</div></li>`;
+  }).join('');
+}
+function docList(top, key, label) {
+  if (!top?.length) return '';
+  return `<details><summary>Top ${top.length}</summary><ol class="mini-list">${top.map(d => `<li>${esc(d.title || d.doc_id)} <span class="faint">${label} ${fix(d[key], key === 'rrf_score' ? 4 : 2)}</span></li>`).join('')}</ol></details>`;
+}
+function stageDetail(stage, s) {
+  if (s.status === 'skipped') return `Skipped · ${esc(s.reason)}`;
+  if (s.status === 'running') return stage === 'generate' ? `Streaming from ${esc(s.model || 'the generator')}…` : 'Working…';
+  if (s.status !== 'done') return '';
+  switch (stage) {
+    case 'dense': return `${s.count} candidates · best cosine ${fix(s.top?.[0]?.dense_score)}${docList(s.top, 'dense_score', 'cos')}`;
+    case 'bm25': return `${s.count} candidates · best score ${fix(s.top?.[0]?.bm25_score, 1)}${docList(s.top, 'bm25_score', 'bm25')}`;
+    case 'fusion': return `${s.count} kept · ${s.from_both} found by both retrievers${docList(s.top, 'rrf_score', 'rrf')}`;
+    case 'calibrator': return `p(evidence found) = <b>${fix(s.mean)}</b> ± ${fix(s.std)}${s.fitted ? '' : ' (unfitted fallback)'}
+      <details><summary>Signals</summary><table class="sig-table"><tbody>${Object.entries(s.signals).map(([k, v]) => `<tr><td>${esc(k.replaceAll('_', ' '))}</td><td class="right num">${fix(v, 3)}</td></tr>`).join('')}</tbody></table></details>`;
+    case 'route': return `→ <b>${esc(s.track)}</b> · fast if p ≥ ${fix(s.thresholds.fast_mean)}, abstain if p < ${fix(s.thresholds.abstain_mean)} or ± > ${fix(s.thresholds.abstain_std)}`;
+    case 'rerank': return `${s.candidates} candidates scored → ${s.kept} kept · top relevance ${fix(s.top?.[0]?.relevance_score)}${docList(s.top, 'relevance_score', 'rel')}`;
+    case 'generate': return `${esc(s.model)} · ${s.characters} characters`;
+  }
+  return '';
+}
+
+/* answer + sources */
+function renderGauge(confidence, thresholds) {
+  if (!confidence) { $('gauge').hidden = true; return; }
+  const { mean, std } = confidence, lo = Math.max(0, mean - std), hi = Math.min(1, mean + std);
+  const marks = thresholds ? [[thresholds.fast_mean, 'fast'], ...(thresholds.abstain_mean > 0 ? [[thresholds.abstain_mean, 'abstain']] : [])] : [];
+  $('gauge').hidden = false;
+  $('gauge').innerHTML = `<div class="kpi-label">Calibrator confidence that retrieval found the evidence</div>
+    <div class="gauge-track" role="img" aria-label="Confidence ${pct(mean)}">
+      <div class="gauge-band" style="left:${lo * 100}%;width:${(hi - lo) * 100}%"></div>
+      <div class="gauge-fill" style="width:${mean * 100}%"></div>
+      ${marks.map(([v, label]) => `<div class="gauge-mark" style="left:${v * 100}%"><span>${label} ${fix(v)}</span></div>`).join('')}
+    </div><div class="gauge-scale"><span>0</span><span class="num">${fix(mean)} ± ${fix(std)}</span><span>1</span></div>`;
+}
+function renderSources(docs) {
+  $('sources-sub').textContent = `${docs.length} documents passed to the generator`;
+  $('sources').innerHTML = docs.length ? docs.map((d, i) => {
+    const chips = [['relevance', d.relevance_score, 2], ['rrf', d.rrf_score, 4], ['cosine', d.dense_score, 2], ['bm25', d.bm25_score, 1]]
+      .filter(([, v]) => v != null).map(([k, v, n]) => `<span class="badge num">${k} ${fix(v, n)}</span>`).join('');
+    return `<div class="source"><div class="source-head"><span class="rank">${i + 1}</span><div><div class="source-title">${esc(d.title || 'Untitled')}</div><div class="source-id">${esc(d.doc_id)}</div></div></div>
+      <div class="scores">${chips}</div>${d.passage ? `<details><summary>Passage the model saw</summary><p>${esc(d.passage)}</p></details>` : ''}</div>`;
+  }).join('') : '<div class="placeholder small">No documents.</div>';
+}
+
+/* streaming */
+async function ask() {
+  const query = $('query').value.trim();
+  if (!query || controller) return;
+  $('error').hidden = true;
+  controller = new AbortController();
+  $('ask').disabled = true; $('stop').hidden = false;
+  stageState = {}; let plan = [], thresholds = null, answer = '';
+  $('answer').className = 'answer-text streaming'; $('answer').textContent = '';
+  $('answer-sub').textContent = 'Running…'; $('answer-meta').innerHTML = `<span class="badge">${esc(strategy)}</span>`;
+  $('gauge').hidden = true; $('sources').innerHTML = '<div class="placeholder small">Retrieving…</div>';
+  remember(query);
+  try {
+    const response = await fetch('/engine/stream', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: controller.signal,
+      body: JSON.stringify({ query, top_k: +$('topk').value, strategy }),
+    });
+    if (!response.ok) throw new Error((await response.json().catch(() => ({}))).detail || `HTTP ${response.status}`);
+    const reader = response.body.getReader(), decoder = new TextDecoder();
+    let buffer = '';
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let cut;
+      while ((cut = buffer.indexOf('\n\n')) >= 0) {
+        const block = buffer.slice(0, cut); buffer = buffer.slice(cut + 2);
+        const data = block.split('\n').find(l => l.startsWith('data: '));
+        if (!data) continue;
+        const e = JSON.parse(data.slice(6));
+        if (e.type === 'start') { plan = e.plan; renderTimeline(plan); $('pipeline-sub').textContent = `${e.strategy} · top ${e.top_k}`; }
+        else if (e.type === 'stage') {
+          stageState[e.stage] = e;
+          if (e.stage === 'route') thresholds = e.thresholds;
+          if (e.stage === 'calibrator' && e.status === 'done') renderGauge({ mean: e.mean, std: e.std }, thresholds);
+          if (e.stage === 'route') renderGauge({ mean: stageState.calibrator.mean, std: stageState.calibrator.std }, thresholds);
+          renderTimeline(plan);
+        }
+        else if (e.type === 'sources') renderSources(e.documents);
+        else if (e.type === 'token') { answer += e.text; $('answer').textContent = answer; }
+        else if (e.type === 'done') {
+          $('answer').textContent = e.answer || answer;
+          $('answer-sub').textContent = `Answered in ${(e.total_ms / 1000).toFixed(1)} s`;
+          $('answer-meta').innerHTML = `<span class="badge">${esc(strategy)}</span><span class="badge ${e.track === 'Abstain' ? '' : 'ok'}">${esc(e.track)} track</span>`;
+        }
+        else if (e.type === 'error') throw new Error(e.message);
+      }
+    }
+  } catch (err) {
+    if (err.name !== 'AbortError') { $('error').hidden = false; $('error').textContent = `The engine stopped: ${err.message}`; }
+    $('answer-sub').textContent = err.name === 'AbortError' ? 'Stopped' : 'Failed';
+    Object.keys(stageState).forEach(k => { if (stageState[k].status === 'running') stageState[k] = { status: 'skipped', reason: 'stopped' }; });
+    renderTimeline(plan);
+  } finally {
+    $('answer').classList.remove('streaming');
+    if (!$('answer').textContent) { $('answer').textContent = 'No answer.'; $('answer').classList.add('placeholder'); }
+    controller = null; $('ask').disabled = false; $('stop').hidden = true;
+  }
+}
+$('ask').onclick = ask;
+$('stop').onclick = () => controller?.abort();
+$('query').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) ask(); });
+renderTimeline(['dense', 'bm25', 'fusion', 'calibrator', 'route', 'rerank', 'generate']);
+</script>
+</body>
+</html>
