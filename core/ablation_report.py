@@ -40,6 +40,39 @@ def interval(values: list[float], rng: np.random.Generator) -> tuple[float, floa
     return float(np.percentile(samples, 2.5)), float(np.percentile(samples, 97.5))
 
 
+# A question's evidence counts as "in context" when the judge finds at least this share
+# of its gold facts in the documents the model was given.
+EVIDENCE_THRESHOLD = 0.5
+OUTCOMES = ("correct", "generation_error", "context_loss", "retrieval_miss", "missed_abstention", "ungraded")
+
+
+def evidence_share(facts_in_context: list[bool | None] | None) -> float | None:
+    graded = [fact for fact in (facts_in_context or []) if fact is not None]
+    return sum(graded) / len(graded) if graded else None
+
+
+def attribute(correct: bool, category: str, recall: float | None, facts_in_context: list[bool | None] | None) -> str:
+    """Where an answer failed, walking the pipeline backwards from the generator.
+
+    generation_error  the evidence was in the model's context, yet the answer was wrong
+    context_loss      every gold document was retrieved, but its facts did not reach the prompt
+    retrieval_miss    a gold document was not retrieved and the evidence was not in context
+    missed_abstention an unanswerable question got an answer instead of "not found"
+    """
+    if category == "info_not_found":
+        return "correct" if correct else "missed_abstention"
+    if correct:
+        return "correct"
+    share = evidence_share(facts_in_context)
+    if share is None:
+        return "ungraded"
+    if share >= EVIDENCE_THRESHOLD:
+        return "generation_error"
+    if recall is not None and recall >= 1.0:
+        return "context_loss"
+    return "retrieval_miss"
+
+
 def read_manifest(run_dir: Path) -> dict:
     return json.loads((run_dir / "manifest.json").read_text(encoding="utf-8"))
 
@@ -100,6 +133,8 @@ def compute_summary(run_dir: Path, categories: dict[str, str]) -> dict:
                 "mean_difference": float(np.mean(diff)), "95ci": (low, high), "significant": low > 0 or high < 0,
             }
 
+    summary["attribution"] = compute_attribution(run_dir, common, categories, judged, retrieval)
+
     sanity = list(read_jsonl(run_dir / "judge_sanity.jsonl").values())
     if sanity:
         negatives = [s["negative_control"] for s in sanity if "negative_control" in s]
@@ -113,3 +148,49 @@ def compute_summary(run_dir: Path, categories: dict[str, str]) -> dict:
             "wrong_answer_facts_present": float(np.mean([completeness(n["facts_present"]) for n in negatives])) if negatives else None,
         }
     return summary
+
+
+def compute_attribution(
+    run_dir: Path,
+    common: list[str],
+    categories: dict[str, str],
+    judged: dict[str, dict[str, dict]],
+    retrieval: dict[str, dict],
+) -> dict | None:
+    """Split every model's outcomes into correct / generation / context / retrieval failures."""
+    context = read_jsonl(run_dir / "context_facts.jsonl")
+    questions = [q for q in common if q in context]
+    if not questions:
+        return None
+    shares = [evidence_share(context[q]["facts_in_context"]) for q in questions
+              if categories.get(q) != "info_not_found"]
+    shares = [s for s in shares if s is not None]
+    result = {
+        "evidence_threshold": EVIDENCE_THRESHOLD,
+        "questions": len(questions),
+        "context_fact_recall": float(np.mean(shares)) if shares else None,
+        "evidence_in_context_rate": float(np.mean([s >= EVIDENCE_THRESHOLD for s in shares])) if shares else None,
+        "models": {},
+    }
+    for model, verdicts in judged.items():
+        counts = Counter(
+            attribute(verdicts[q]["correct"], categories.get(q, ""), retrieval.get(q, {}).get("recall_at_k"),
+                      context[q]["facts_in_context"])
+            for q in questions
+        )
+        without_evidence = sum(
+            1 for q in questions
+            if verdicts[q]["correct"] and categories.get(q) != "info_not_found"
+            and (evidence_share(context[q]["facts_in_context"]) or 0.0) < EVIDENCE_THRESHOLD
+        )
+        result["models"][model] = {
+            "outcomes": {outcome: counts.get(outcome, 0) for outcome in OUTCOMES},
+            "correct_without_evidence": without_evidence,
+        }
+    controls = list(read_jsonl(run_dir / "context_controls.jsonl").values())
+    if controls:
+        negatives = [evidence_share(c["facts_in_context"]) for c in controls]
+        negatives = [n for n in negatives if n is not None]
+        result["context_judge_false_positive_rate"] = float(np.mean(negatives)) if negatives else None
+        result["context_controls"] = len(controls)
+    return result

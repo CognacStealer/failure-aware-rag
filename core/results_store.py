@@ -256,8 +256,9 @@ def _section_calibrator(training: dict[str, Any] | None, evaluation: dict[str, A
             f"| Always rerank (CRAG) | {st['crag']['recall']:.3f} | {st['crag']['seconds']:.2f} s |",
             f"| **Calibrated routing** | **{st['adaptive']['recall']:.3f}** | **{st['adaptive']['seconds']:.2f} s** |",
             "",
-            f"Routing keeps {st['adaptive']['recall'] / st['crag']['recall']:.1%} of always-rerank recall and saves "
-            f"{saved:.0%} of its retrieval time. {_link(evaluation, 'Evaluation data')}",
+            (f"Routing matches always-rerank recall" if st["adaptive"]["recall"] >= 0.995 * st["crag"]["recall"]
+             else f"Routing keeps {st['adaptive']['recall'] / st['crag']['recall']:.1%} of always-rerank recall")
+            + f" and saves {saved:.0%} of its retrieval time. {_link(evaluation, 'Evaluation data')}",
             "",
         ]
     elif training:
@@ -293,6 +294,32 @@ def _section_ablation(entry: dict[str, Any]) -> list[str]:
             low, high = pair["95ci"]
             verdict = "real difference" if pair["significant"] else "not yet distinguishable"
             lines.append(f"| {first} vs {second} | {pair['mean_difference']:+.2f} | {low:+.2f} – {high:+.2f} | {verdict} |")
+        lines.append("")
+    attribution = summary.get("attribution")
+    if attribution:
+        labels = [("correct", "Correct"), ("generation_error", "Generation error"), ("context_loss", "Context loss"),
+                  ("retrieval_miss", "Retrieval miss"), ("missed_abstention", "Missed abstention")]
+        lines += [
+            "### Why answers fail",
+            "",
+            f"For {attribution['questions']} questions the judge checked which gold facts reached each model's",
+            f"context ({attribution['context_fact_recall']:.0%} on average; "
+            f"{attribution['evidence_in_context_rate']:.0%} of questions had at least "
+            f"{attribution['evidence_threshold']:.0%} of their facts in context). Each wrong answer is traced to the",
+            "stage that lost the evidence: a *generation error* had the evidence and still failed, *context loss*",
+            "retrieved the documents but not the facts into the prompt, a *retrieval miss* never found the documents.",
+            "",
+            "| Model | " + " | ".join(label for _, label in labels) + " |",
+            "|---|" + "---:|" * len(labels),
+        ]
+        for model, data in attribution["models"].items():
+            counts = data["outcomes"]
+            total = sum(counts.values()) or 1
+            lines.append(f"| {model.split('/')[-1]} | "
+                         + " | ".join(f"{counts.get(key, 0)} ({counts.get(key, 0) / total:.0%})" for key, _ in labels) + " |")
+        if attribution.get("context_judge_false_positive_rate") is not None:
+            lines += ["", f"Context check false-positive rate (facts credited to another question's context): "
+                          f"{attribution['context_judge_false_positive_rate']:.0%} on {attribution['context_controls']} controls."]
         lines.append("")
     sanity = summary.get("judge_sanity")
     if sanity:

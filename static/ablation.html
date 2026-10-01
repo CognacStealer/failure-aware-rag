@@ -19,6 +19,7 @@
       <div class="nav-label" style="margin-top:14px">Experiments</div>
       <a href="#overview" data-view="overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Overview</a>
       <a href="#calibrator" data-view="calibrator"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 14l4-4"/><path d="M3.3 19a10 10 0 1 1 17.4 0"/></svg>Calibrator</a>
+      <a href="#diagnostics" data-view="diagnostics"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Diagnostics</a>
       <a href="#answers" data-view="answers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Answers</a>
       <a href="#results" data-view="results"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4z"/><path d="M3 12l9 4 9-4"/><path d="M3 17l9 4 9-4"/></svg>Results</a>
     </nav>
@@ -119,6 +120,37 @@
         </div>
       </section>
 
+      <!-- DIAGNOSTICS -->
+      <section class="view" id="view-diagnostics" hidden>
+        <div class="page-head"><h1>Diagnostics</h1><p>When an answer is wrong, was it retrieval or generation? For every question the judge checks which gold facts actually reached the model's context; each wrong answer is then traced back to the stage where the evidence was lost.</p></div>
+        <div id="diag-missing" class="card empty" hidden>Waiting for the first context checks from the running comparison.</div>
+        <div id="diag-body">
+          <div class="grid kpis">
+            <div class="card kpi"><div class="kpi-label">Context fact recall</div><div class="kpi-value num" id="d-cfr">–</div><div class="kpi-caption">average share of gold facts present in the model's context</div></div>
+            <div class="card kpi"><div class="kpi-label">Evidence reached the model</div><div class="kpi-value num" id="d-evidence">–</div><div class="kpi-caption" id="d-evidence-cap">–</div></div>
+            <div class="card kpi"><div class="kpi-label">Context judge false positives</div><div class="kpi-value num" id="d-fp">–</div><div class="kpi-caption" id="d-fp-cap">facts credited to another question's context (ideal 0%)</div></div>
+            <div class="card kpi"><div class="kpi-label">Questions diagnosed</div><div class="kpi-value num" id="d-n">–</div><div class="kpi-caption">graded by every model and context-checked</div></div>
+          </div>
+          <div class="card mt">
+            <div class="card-head"><div><h2>Where answers fail</h2><p>Each model's answers, split by the stage that lost the evidence</p></div></div>
+            <div class="card-body"><div id="d-bars"></div><div class="legend" id="d-legend"></div>
+              <div class="table-wrap mt"><table id="d-table"></table></div></div>
+          </div>
+          <div class="card mt">
+            <div class="card-head"><div><h2>How a wrong answer is classified</h2><p>Walking the pipeline backwards from the generator</p></div></div>
+            <div class="card-body small">
+              <ol style="margin:0;padding-left:18px;line-height:1.9">
+                <li><b>Missed abstention</b>: an unanswerable question received an answer instead of "not found".</li>
+                <li><b>Generation error</b>: at least <span id="d-threshold">50%</span> of the gold facts were in the context, yet the answer was wrong. <span class="muted">Fix the prompt or the model.</span></li>
+                <li><b>Context loss</b>: every gold document was retrieved, but its facts did not reach the prompt. <span class="muted">Fix chunking or context assembly.</span></li>
+                <li><b>Retrieval miss</b>: a gold document was not retrieved. <span class="muted">Fix retrieval or reranking.</span></li>
+              </ol>
+              <p class="note">Correct answers given without the evidence in context are counted separately: they come from the model's own knowledge or judge leniency.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- ANSWERS -->
       <section class="view" id="view-answers" hidden>
         <div class="page-head"><h1>Answers</h1><p>The most recent questions, every model's answer side by side with the judge's verdict.</p></div>
@@ -127,6 +159,7 @@
             <button type="button" data-filter="all" aria-pressed="true">All</button>
             <button type="button" data-filter="disagree" aria-pressed="false">Models disagree</button>
             <button type="button" data-filter="wrong" aria-pressed="false">Any incorrect</button>
+            <button type="button" data-filter="generation" aria-pressed="false">Generation errors</button>
             <button type="button" data-filter="pending" aria-pressed="false">Awaiting judge</button>
           </div>
           <input class="search" id="feed-search" type="search" placeholder="Search questions or answers" aria-label="Search answers">
@@ -147,7 +180,7 @@
 <script>
 const POLL_MS = 4000, CAL_POLL_MS = 30000;
 const SERIES = ['var(--series-1)', 'var(--series-2)', 'var(--series-3)'];
-const VIEWS = { overview: 'Overview', calibrator: 'Calibrator', answers: 'Answers', results: 'Results' };
+const VIEWS = { overview: 'Overview', calibrator: 'Calibrator', diagnostics: 'Diagnostics', answers: 'Answers', results: 'Results' };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const short = (m) => m.split('/').pop();
@@ -227,7 +260,7 @@ function rerender() {
   if (!status) return;
   const models = Object.keys(status.manifest.candidates);
   models.forEach((m, i) => { colorOf[m] = SERIES[i] || 'var(--faint)'; });
-  renderChrome(); renderOverview(models); renderFeed(models);
+  renderChrome(); renderOverview(models); renderDiagnostics(models); renderFeed(models);
 }
 
 /* ---------- chrome ---------- */
@@ -446,6 +479,40 @@ function renderRoutes(routes) {
   bindTips($('routes'));
 }
 
+/* ---------- diagnostics ---------- */
+const OUTCOMES = [
+  ['correct', 'Correct', 'var(--good)'], ['generation_error', 'Generation error', 'var(--out-gen)'],
+  ['context_loss', 'Context loss', 'var(--out-ctx)'], ['retrieval_miss', 'Retrieval miss', 'var(--out-ret)'],
+  ['missed_abstention', 'Missed abstention', 'var(--out-abs)'], ['ungraded', 'Ungraded', 'var(--out-none)'],
+];
+const OUTCOME_LABEL = Object.fromEntries(OUTCOMES.map(([k, label]) => [k, label]));
+function renderDiagnostics(models) {
+  const a = status.summary.attribution;
+  $('diag-missing').hidden = !!a; $('diag-body').hidden = !a;
+  if (!a) return;
+  $('d-cfr').textContent = pct(a.context_fact_recall);
+  $('d-evidence').textContent = pct(a.evidence_in_context_rate);
+  $('d-evidence-cap').textContent = `questions with ≥${pct(a.evidence_threshold)} of gold facts in context`;
+  $('d-fp').textContent = a.context_judge_false_positive_rate == null ? '–' : pct(a.context_judge_false_positive_rate);
+  if (a.context_controls) $('d-fp-cap').textContent = `facts credited to another question's context · n=${a.context_controls} (ideal 0%)`;
+  $('d-n').textContent = a.questions;
+  $('d-threshold').textContent = pct(a.evidence_threshold);
+  const shown = OUTCOMES.filter(([k]) => models.some(m => a.models[m]?.outcomes[k]));
+  $('d-bars').innerHTML = models.filter(m => a.models[m]).map(m => {
+    const o = a.models[m].outcomes, total = Object.values(o).reduce((x, y) => x + y, 0) || 1;
+    return `<div class="outcome-row"><div class="model-cell"><span class="swatch" style="background:${colorOf[m]}"></span>${esc(short(m))}</div>
+      <div class="stack">${shown.filter(([k]) => o[k]).map(([k, label, color]) => `<div tabindex="0" style="width:${100 * o[k] / total}%;background:${color}" data-tip="<b>${esc(short(m))}: ${label}</b>${o[k]} of ${total} questions (${pct(o[k] / total)})"></div>`).join('')}</div>
+      <div class="num small muted right">${pct(o.correct / total)} ok</div></div>`;
+  }).join('');
+  bindTips($('d-bars'));
+  $('d-legend').innerHTML = shown.map(([, label, color]) => `<span><span class="swatch" style="background:${color}"></span>${label}</span>`).join('');
+  $('d-table').innerHTML = `<thead><tr><th>Model</th>${shown.map(([, label]) => `<th class="right">${label}</th>`).join('')}<th class="right">Correct without evidence</th></tr></thead><tbody>` +
+    models.filter(m => a.models[m]).map(m => {
+      const o = a.models[m].outcomes, total = Object.values(o).reduce((x, y) => x + y, 0) || 1;
+      return `<tr><td><div class="model-cell"><span class="swatch" style="background:${colorOf[m]}"></span>${esc(short(m))}</div></td>${shown.map(([k]) => `<td class="right num">${o[k]} <span class="faint">(${pct(o[k] / total)})</span></td>`).join('')}<td class="right num">${a.models[m].correct_without_evidence}</td></tr>`;
+    }).join('') + '</tbody>';
+}
+
 /* ---------- answers ---------- */
 document.querySelectorAll('[data-filter]').forEach(b => b.addEventListener('click', () => {
   feedFilter = b.dataset.filter;
@@ -462,6 +529,7 @@ function renderFeed(models) {
     if (feedFilter === 'disagree' && !(verdicts.length > 1 && new Set(verdicts.map(v => v.correct)).size > 1)) return false;
     if (feedFilter === 'wrong' && !verdicts.some(v => !v.correct)) return false;
     if (feedFilter === 'pending' && verdicts.length === Object.keys(item.answers).length) return false;
+    if (feedFilter === 'generation' && !verdicts.some(v => v.outcome === 'generation_error')) return false;
     if (query && !(item.question + ' ' + Object.values(item.answers).map(a => a.answer).join(' ')).toLowerCase().includes(query)) return false;
     return true;
   });
@@ -473,12 +541,13 @@ function renderFeed(models) {
       const head = `<span class="swatch" style="background:${colorOf[m]}"></span>${esc(short(m))}`;
       if (!a) return `<div class="answer"><div class="answer-head">${head}<span class="badge">Waiting</span></div></div>`;
       const v = a.verdict;
-      const badge = !v ? '<span class="badge">Awaiting judge</span>' : v.correct ? '<span class="badge ok">✓ Correct</span>' : '<span class="badge bad">✕ Incorrect</span>';
+      const badge = !v ? '<span class="badge">Awaiting judge</span>' : v.correct ? '<span class="badge ok">✓ Correct</span>'
+        : `<span class="badge bad">✕ ${v.outcome && v.outcome !== 'ungraded' ? esc(OUTCOME_LABEL[v.outcome]) : 'Incorrect'}</span>`;
       return `<div class="answer"><div class="answer-head">${head}${badge}</div><p>${esc(a.answer)}</p>
         <div class="answer-foot num">${v ? `${v.facts_present}/${v.facts_total} facts · ` : ''}${Math.round(a.seconds)} s${a.cut_off ? ' · cut off at token limit' : ''}</div></div>`;
     }).join('');
     return `<article class="card item${fresh ? ' fresh' : ''}">
-      <div class="item-head"><span class="chip">${esc(item.category.replaceAll('_', ' '))}</span><span>${esc(item.question_id)}</span><span>· retrieval recall ${item.recall_at_k == null ? 'n/a' : fix(item.recall_at_k)}</span></div>
+      <div class="item-head"><span class="chip">${esc(item.category.replaceAll('_', ' '))}</span><span>${esc(item.question_id)}</span><span>· retrieval recall ${item.recall_at_k == null ? 'n/a' : fix(item.recall_at_k)}</span>${item.evidence_share == null ? '' : `<span>· gold facts in context ${pct(item.evidence_share)}</span>`}</div>
       <h3>${esc(item.question)}</h3><div class="answers">${cols}</div>
       <details data-qid="${esc(item.question_id)}"${openGold.has(item.question_id) ? ' open' : ''}><summary>Gold answer</summary><p>${esc(item.gold_answer)}</p></details></article>`;
   }).join('') : '<div class="card empty">No answers match this filter.</div>';

@@ -15,7 +15,7 @@ from sklearn.metrics import roc_auc_score
 
 import config
 from core import results_store
-from core.ablation_report import compute_summary, read_jsonl, read_manifest, slug
+from core.ablation_report import attribute, compute_summary, evidence_share, read_jsonl, read_manifest, slug
 
 router = APIRouter(prefix="/ablation", tags=["ablation"])
 
@@ -132,6 +132,7 @@ def run_status(name: str, request: Request):
     answers = {model: read_jsonl(run_dir / f"{slug(model)}.jsonl") for model in models}
     judged = {model: read_jsonl(run_dir / f"{slug(model)}_judged.jsonl") for model in models}
     sanity = read_jsonl(run_dir / "judge_sanity.jsonl")
+    context = read_jsonl(run_dir / "context_facts.jsonl")
     order = list(retrieval)
 
     # What is happening now: the model Ollama has loaded, else inferred from file counts.
@@ -191,6 +192,7 @@ def run_status(name: str, request: Request):
             "category": info.get("category", ""),
             "gold_answer": info.get("gold_answer", ""),
             "recall_at_k": retrieval[qid].get("recall_at_k"),
+            "evidence_share": evidence_share(context[qid]["facts_in_context"]) if qid in context else None,
             "answers": {},
         }
         for model in models:
@@ -206,6 +208,9 @@ def run_status(name: str, request: Request):
                     "correct": verdict["correct"],
                     "facts_present": sum(1 for f in verdict["facts_present"] if f),
                     "facts_total": len(verdict["facts_present"]),
+                    "outcome": attribute(verdict["correct"], info.get("category", ""),
+                                         retrieval[qid].get("recall_at_k"),
+                                         context[qid]["facts_in_context"]) if qid in context else None,
                 },
             }
         recent.append(entry)

@@ -132,6 +132,38 @@ def judge_prompt(question: dict, answer: str, facts: list[str], with_correctness
     )
 
 
+def context_of(prompt: str) -> str:
+    """The retrieved context alone, so the question text cannot count as evidence."""
+    start = prompt.find("Context:\n")
+    end = prompt.rfind("\n\nQuestion:")
+    return prompt[start + len("Context:\n"):end] if start != -1 and end > start else prompt
+
+
+def context_facts_prompt(question: dict, context: str, facts: list[str]) -> str:
+    listed = "\n".join(f"{i}. {fact}" for i, fact in enumerate(facts, 1))
+    return (
+        "You check which facts a set of retrieved documents states.\n"
+        f"- present: the numbers (1-{len(facts)}) of the facts below that the documents themselves state, "
+        "even if worded differently. Leave a fact out if the documents do not state it. Use [] if none.\n"
+        'Return JSON only: {"present": [fact numbers]}\n\n'
+        f"Question (for reference only): {question['question']}\n\n"
+        f"Facts:\n{listed}\n\nDocuments:\n{context}"
+    )
+
+
+def grade_context(args, question: dict, prompt: str) -> dict:
+    """Which gold facts reached the model's context: separates retrieval/context loss from generation errors."""
+    facts, context = question["facts"], context_of(prompt)
+    batches = [facts[i:i + FACTS_PER_JUDGE_CALL] for i in range(0, len(facts), FACTS_PER_JUDGE_CALL)]
+    present, parse_ok = [], True
+    for batch in batches:
+        verdict, ok, _ = _judge_call(args, context_facts_prompt(question, context, batch), len(batch))
+        parse_ok &= ok
+        present += [(i in verdict["present"]) if ok else None for i in range(1, len(batch) + 1)]
+    return {"facts_in_context": present, "facts_ungraded": sum(f is None for f in present),
+            "judge_parse_ok": parse_ok, "judge_calls": len(batches)}
+
+
 def strip_citations(answer: str) -> str:
     answer = re.sub(r"\[[^\]]+\]", " ", answer)
     answer = re.sub(r"\bDoc(?:ument)?\s*#?\s*\d+\b", " ", answer, flags=re.IGNORECASE)
@@ -216,6 +248,8 @@ def run(args) -> None:
 
     retrieval_path = run_dir / "retrieval.jsonl"
     sanity_path = run_dir / "judge_sanity.jsonl"
+    context_path = run_dir / "context_facts.jsonl"
+    context_controls_path = run_dir / "context_controls.jsonl"
     answer_paths = {model: run_dir / f"{slug(model)}.jsonl" for model in CANDIDATES}
     judgment_paths = {model: run_dir / f"{slug(model)}_judged.jsonl" for model in CANDIDATES}
     sanity_ids = {q["question_id"] for q in questions[: args.judge_sanity]}
@@ -273,6 +307,23 @@ def run(args) -> None:
                     "question_id": question["question_id"], **verdict, "seconds": round(time.time() - t0, 2),
                 })
                 unload(args.host, args.judge_model)  # bound the judge's prompt cache
+
+        context_done = read_jsonl(context_path)
+        controls_done = read_jsonl(context_controls_path)
+        for index, question in enumerate(chunk):
+            qid = question["question_id"]
+            if qid not in context_done:
+                t0 = time.time()
+                graded = grade_context(args, question, retrieved[qid]["prompt"])
+                append_jsonl(context_path, {"question_id": qid, **graded, "seconds": round(time.time() - t0, 2)})
+                unload(args.host, args.judge_model)
+            if qid in sanity_ids and qid not in controls_done and len(chunk) > 1:
+                # Negative control: another question's context should state ~none of these facts;
+                # what the judge credits there is its false-positive rate for context facts.
+                other = chunk[(index + 1) % len(chunk)]["question_id"]
+                negative = grade_context(args, question, retrieved[other]["prompt"])
+                append_jsonl(context_controls_path, {"question_id": qid, "context_of": other, **negative})
+                unload(args.host, args.judge_model)
 
         sanity_done = read_jsonl(sanity_path)
         for question in chunk:
