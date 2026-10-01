@@ -1,0 +1,25 @@
+{"question_id": "qst_0165", "correct": true, "facts_present": [true, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "judge_failed_raw": [], "seconds": 27.57}
+{"question_id": "qst_0384", "correct": false, "facts_present": [true, true, false, false, true, false, false, false, true, false, true, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 2, "judge_failed_raw": [], "seconds": 76.14}
+{"question_id": "qst_0046", "correct": true, "facts_present": [true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "judge_failed_raw": [], "seconds": 23.28}
+{"question_id": "qst_0157", "correct": true, "facts_present": [true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "judge_failed_raw": [], "seconds": 27.77}
+{"question_id": "qst_0054", "correct": true, "facts_present": [true, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "judge_failed_raw": [], "seconds": 31.56}
+{"question_id": "qst_0073", "correct": false, "facts_present": [true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "judge_failed_raw": [], "seconds": 25.28}
+{"question_id": "qst_0316", "correct": true, "facts_present": [true, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "judge_failed_raw": [], "seconds": 30.56}
+{"question_id": "qst_0210", "correct": false, "facts_present": [true, false, false, false, false, false, true, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 2, "judge_failed_raw": [], "seconds": 67.11}
+{"question_id": "qst_0075", "correct": true, "facts_present": [false, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "judge_failed_raw": [], "seconds": 26.72}
+{"question_id": "qst_0334", "correct": false, "facts_present": [true, true, false, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "judge_failed_raw": [], "seconds": 38.84}
+{"question_id": "qst_0404", "correct": true, "facts_present": [true, true, true, false, false, false, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 2, "judge_failed_raw": [], "seconds": 58.78}
+{"question_id": "qst_0416", "correct": true, "facts_present": [true, true, true, true, false, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "judge_failed_raw": [], "seconds": 38.54}
+{"question_id": "qst_0093", "correct": true, "facts_present": [true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "judge_failed_raw": [], "seconds": 26.57}
+{"question_id": "qst_0216", "correct": false, "facts_present": [true, true, true, true, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "judge_failed_raw": [], "seconds": 39.12}
+{"question_id": "qst_0480", "correct": false, "facts_present": [true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "judge_failed_raw": [], "seconds": 26.69}
+{"question_id": "qst_0060", "correct": false, "facts_present": [false, false, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "judge_failed_raw": [], "seconds": 34.55}
+{"question_id": "qst_0369", "correct": true, "facts_present": [true, true, true, true, true, true, true, true, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 2, "judge_failed_raw": [], "seconds": 93.98}
+{"question_id": "qst_0164", "correct": true, "facts_present": [true, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "judge_failed_raw": [], "seconds": 31.07}
+{"question_id": "qst_0211", "correct": false, "facts_present": [true, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "judge_failed_raw": [], "seconds": 32.99}
+{"question_id": "qst_0252", "correct": true, "facts_present": [true, false, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "judge_failed_raw": [], "seconds": 34.35}
+{"question_id": "qst_0444", "correct": true, "facts_present": [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, false, true, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 8, "judge_failed_raw": [], "seconds": 359.37}
+{"question_id": "qst_0321", "correct": false, "facts_present": [false, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "judge_failed_raw": [], "seconds": 26.32}
+{"question_id": "qst_0290", "correct": false, "facts_present": [true, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "judge_failed_raw": [], "seconds": 31.23}
+{"question_id": "qst_0390", "correct": false, "facts_present": [false, false, false, false, true, true, true, true, false, true, false, false, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 3, "judge_failed_raw": [], "seconds": 105.27}
+{"question_id": "qst_0008", "correct": true, "facts_present": [true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "judge_failed_raw": [], "seconds": 23.83}

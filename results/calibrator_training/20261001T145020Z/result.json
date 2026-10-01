@@ -1,0 +1,70 @@
+{
+  "label": "all gold documents in hybrid top-k",
+  "top_k": 10,
+  "features": [
+    "query_terms",
+    "bm25_top",
+    "bm25_margin",
+    "dense_top",
+    "dense_margin",
+    "agreement"
+  ],
+  "ensemble_size": 30,
+  "suggested_thresholds": {
+    "abstain_mean": 0.0,
+    "fast_mean": 0.89,
+    "fast_precision_target": 0.9,
+    "abstain_recoverable_target": 0.1
+  },
+  "train": {
+    "n": 245,
+    "success_rate": 0.6326530612244898,
+    "auc": 0.7185663082437276,
+    "brier": 0.2012066827627073,
+    "brier_constant": 0.23240316534777175,
+    "routes": {
+      "Fast": {
+        "count": 19,
+        "retrieval_complete": 0.9473684210526315,
+        "gold_in_pool": 0.9473684210526315,
+        "unanswerable": 0
+      },
+      "Corrective": {
+        "count": 226,
+        "retrieval_complete": 0.6061946902654868,
+        "gold_in_pool": 0.6415929203539823,
+        "unanswerable": 11
+      },
+      "Abstain": {
+        "count": 0
+      }
+    }
+  },
+  "test": {
+    "n": 245,
+    "success_rate": 0.6326530612244898,
+    "auc": 0.7245878136200717,
+    "brier": 0.20247761203333042,
+    "brier_constant": 0.23240316534777175,
+    "routes": {
+      "Fast": {
+        "count": 37,
+        "retrieval_complete": 0.8648648648648649,
+        "gold_in_pool": 0.918918918918919,
+        "unanswerable": 1
+      },
+      "Corrective": {
+        "count": 207,
+        "retrieval_complete": 0.5893719806763285,
+        "gold_in_pool": 0.642512077294686,
+        "unanswerable": 8
+      },
+      "Abstain": {
+        "count": 1,
+        "retrieval_complete": 1.0,
+        "gold_in_pool": 1.0,
+        "unanswerable": 0
+      }
+    }
+  }
+}

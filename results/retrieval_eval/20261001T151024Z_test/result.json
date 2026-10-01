@@ -1,0 +1,52 @@
+{
+  "split": "test",
+  "questions": 245,
+  "answerable": 236,
+  "top_k": 10,
+  "strategies": {
+    "vanilla": {
+      "recall_at_k": 0.38789346246973366,
+      "hit_rate": 0.4533898305084746,
+      "complete_rate": 0.3474576271186441,
+      "seconds_per_query": 0.34759301269795084
+    },
+    "bm25": {
+      "recall_at_k": 0.6620998116760829,
+      "hit_rate": 0.7203389830508474,
+      "complete_rate": 0.6016949152542372,
+      "seconds_per_query": 0.009670577546928273
+    },
+    "hybrid": {
+      "recall_at_k": 0.7161134651600753,
+      "hit_rate": 0.7711864406779662,
+      "complete_rate": 0.6567796610169492,
+      "seconds_per_query": 0.4018469036775486
+    },
+    "crag": {
+      "recall_at_k": 0.7295080037664784,
+      "hit_rate": 0.788135593220339,
+      "complete_rate": 0.6694915254237288,
+      "seconds_per_query": 4.115986917661232
+    },
+    "adaptive": {
+      "recall_at_k": 0.7259769303201508,
+      "hit_rate": 0.7838983050847458,
+      "complete_rate": 0.6652542372881356,
+      "seconds_per_query": 0.0
+    }
+  },
+  "routing": {
+    "Fast": {
+      "count": 37,
+      "unanswerable": 1
+    },
+    "Corrective": {
+      "count": 207,
+      "unanswerable": 8
+    },
+    "Abstain": {
+      "count": 1,
+      "unanswerable": 0
+    }
+  }
+}

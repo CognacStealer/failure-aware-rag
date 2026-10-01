@@ -1,0 +1,157 @@
+{
+  "run_dir": "data/ablation_runs/full_benchmark",
+  "manifest": {
+    "question_count": 500,
+    "seed": 42,
+    "retrieval": "CRAG: hybrid top-20 reranked by cross-encoder/ms-marco-MiniLM-L-6-v2, top-10 kept; identical for every model",
+    "context": "core.generator.build_prompt, 4500 chars",
+    "max_new_tokens": 200,
+    "candidates": {
+      "Qwen/Qwen2.5-7B-Instruct": "qwen2.5:7b-instruct-q4_K_M",
+      "microsoft/Phi-3-mini-4k-instruct": "phi3:mini-4k",
+      "microsoft/phi-2": "phi:2.7b"
+    },
+    "judge_model": "llama3.1:8b-instruct-q4_K_M",
+    "judge_mode": "one call per answer: correctness + per-fact presence"
+  },
+  "summary": {
+    "questions_judged_by_all_models": 25,
+    "judge_model": "llama3.1:8b-instruct-q4_K_M",
+    "retrieval_recall_at_k": 0.7222222222222223,
+    "questions_by_category": {
+      "basic": 10,
+      "completeness": 1,
+      "conflicting_info": 1,
+      "constrained": 3,
+      "high_level": 1,
+      "intra_document_reasoning": 3,
+      "project_related": 1,
+      "semantic": 5
+    },
+    "models": {
+      "Qwen/Qwen2.5-7B-Instruct": {
+        "correctness": 0.56,
+        "correctness_95ci": [
+          0.36,
+          0.76
+        ],
+        "completeness": 0.702750205866485,
+        "leaderboard_score": 0.47228866740494646,
+        "leaderboard_95ci": [
+          0.29385049833887045,
+          0.6466196013289035
+        ],
+        "mean_generation_seconds": 91.48639999999999,
+        "context_truncated": 0,
+        "answers_cut_at_token_limit": 1,
+        "judge_parse_failures": 0,
+        "facts_ungraded_by_judge": 0,
+        "correctness_by_category": {
+          "basic": 0.8,
+          "completeness": 1.0,
+          "conflicting_info": 1.0,
+          "constrained": 0.333,
+          "high_level": 0.0,
+          "intra_document_reasoning": 0.333,
+          "project_related": 1.0,
+          "semantic": 0.2
+        }
+      },
+      "microsoft/Phi-3-mini-4k-instruct": {
+        "correctness": 0.44,
+        "correctness_95ci": [
+          0.24,
+          0.64
+        ],
+        "completeness": 0.5703997785160575,
+        "leaderboard_score": 0.31720930232558137,
+        "leaderboard_95ci": [
+          0.15441860465116278,
+          0.5144186046511627
+        ],
+        "mean_generation_seconds": 75.7052,
+        "context_truncated": 0,
+        "answers_cut_at_token_limit": 5,
+        "judge_parse_failures": 2,
+        "facts_ungraded_by_judge": 2,
+        "correctness_by_category": {
+          "basic": 0.5,
+          "completeness": 1.0,
+          "conflicting_info": 1.0,
+          "constrained": 0.0,
+          "high_level": 0.0,
+          "intra_document_reasoning": 0.667,
+          "project_related": 1.0,
+          "semantic": 0.2
+        }
+      },
+      "microsoft/phi-2": {
+        "correctness": 0.32,
+        "correctness_95ci": [
+          0.16,
+          0.48
+        ],
+        "completeness": 0.6841327199931851,
+        "leaderboard_score": 0.22201550387596897,
+        "leaderboard_95ci": [
+          0.08666666666666666,
+          0.37474418604651155
+        ],
+        "mean_generation_seconds": 42.09479999999999,
+        "context_truncated": 0,
+        "answers_cut_at_token_limit": 6,
+        "judge_parse_failures": 0,
+        "facts_ungraded_by_judge": 0,
+        "correctness_by_category": {
+          "basic": 0.3,
+          "completeness": 1.0,
+          "conflicting_info": 0.0,
+          "constrained": 0.0,
+          "high_level": 1.0,
+          "intra_document_reasoning": 0.333,
+          "project_related": 1.0,
+          "semantic": 0.2
+        }
+      }
+    },
+    "paired_leaderboard_differences": {
+      "Qwen2_5-7B-Instruct - Phi-3-mini-4k-instruct": {
+        "first": "Qwen/Qwen2.5-7B-Instruct",
+        "second": "microsoft/Phi-3-mini-4k-instruct",
+        "mean_difference": 0.15507936507936507,
+        "95ci": [
+          0.03234920634920634,
+          0.289047619047619
+        ],
+        "significant": true
+      },
+      "Qwen2_5-7B-Instruct - phi-2": {
+        "first": "Qwen/Qwen2.5-7B-Instruct",
+        "second": "microsoft/phi-2",
+        "mean_difference": 0.2502731635289775,
+        "95ci": [
+          0.08678174603174604,
+          0.43263473606496855
+        ],
+        "significant": true
+      },
+      "Phi-3-mini-4k-instruct - phi-2": {
+        "first": "microsoft/Phi-3-mini-4k-instruct",
+        "second": "microsoft/phi-2",
+        "mean_difference": 0.09519379844961241,
+        "95ci": [
+          -0.08012015503875969,
+          0.28186046511627905
+        ],
+        "significant": false
+      }
+    },
+    "judge_sanity": {
+      "n": 25,
+      "gold_answer_marked_correct": 1.0,
+      "gold_answer_facts_present": 0.9661904761904762,
+      "wrong_answer_marked_correct": 0.0,
+      "wrong_answer_facts_present": 0.08928017718715392
+    }
+  }
+}

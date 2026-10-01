@@ -1,0 +1,70 @@
+[
+  {
+    "id": "20261001T151024Z_test",
+    "kind": "retrieval_eval",
+    "title": "Retrieval strategies, test split, top-10",
+    "created_at": "2026-10-01T15:10:24.821522+00:00",
+    "headline": {
+      "hybrid": 0.716,
+      "crag": 0.73,
+      "adaptive": 0.726
+    },
+    "path": "retrieval_eval/20261001T151024Z_test",
+    "files": [
+      "meta.json",
+      "per_question.csv",
+      "result.json"
+    ],
+    "git_commit": "cf61fc228758038e93fa3472206d78a65c4bc9c8",
+    "git_dirty": true
+  },
+  {
+    "id": "20261001T145020Z",
+    "kind": "calibrator_training",
+    "title": "Calibrator fit on 245 train questions",
+    "created_at": "2026-10-01T14:50:20.064497+00:00",
+    "headline": {
+      "test_auc": 0.7245878136200717,
+      "test_brier": 0.20247761203333042,
+      "brier_constant": 0.23240316534777175
+    },
+    "path": "calibrator_training/20261001T145020Z",
+    "files": [
+      "calibrator.pkl",
+      "examples.csv",
+      "meta.json",
+      "result.json"
+    ],
+    "git_commit": "26f0ff1411bff8b5602ecd040b12adfb5911a78c",
+    "git_dirty": true
+  },
+  {
+    "id": "20261001T015505Z_full_benchmark",
+    "kind": "generator_ablation",
+    "title": "Generators on 25/500 questions (full_benchmark)",
+    "created_at": "2026-10-01T01:55:05.164120+00:00",
+    "headline": {
+      "Qwen2.5-7B-Instruct": 0.472,
+      "Phi-3-mini-4k-instruct": 0.317,
+      "phi-2": 0.222,
+      "n": 25
+    },
+    "path": "generator_ablation/20261001T015505Z_full_benchmark",
+    "files": [
+      "Phi-3-mini-4k-instruct.jsonl",
+      "Phi-3-mini-4k-instruct_judged.jsonl",
+      "Qwen2_5-7B-Instruct.jsonl",
+      "Qwen2_5-7B-Instruct_judged.jsonl",
+      "judge_sanity.jsonl",
+      "manifest.json",
+      "meta.json",
+      "per_question.csv",
+      "phi-2.jsonl",
+      "phi-2_judged.jsonl",
+      "result.json",
+      "retrieval.jsonl"
+    ],
+    "git_commit": "26f0ff1411bff8b5602ecd040b12adfb5911a78c",
+    "git_dirty": true
+  }
+]

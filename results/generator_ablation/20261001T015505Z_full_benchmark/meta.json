@@ -1,0 +1,58 @@
+{
+  "id": "20261001T015505Z_full_benchmark",
+  "kind": "generator_ablation",
+  "title": "Generators on 25/500 questions (full_benchmark)",
+  "created_at": "2026-10-01T01:55:05.164120+00:00",
+  "headline": {
+    "Qwen2_5-7B-Instruct": 0.472,
+    "Phi-3-mini-4k-instruct": 0.317,
+    "phi-2": 0.222,
+    "n": 25
+  },
+  "git": {
+    "commit": "26f0ff1411bff8b5602ecd040b12adfb5911a78c",
+    "dirty": true
+  },
+  "command": [
+    "scripts/run_local_generator_ablation.py",
+    "--summarize",
+    "--save"
+  ],
+  "config": {
+    "CHROMA_PATH": "~/Desktop/ChromaDB/Data",
+    "CHROMA_DOCS_COLLECTION": "docs",
+    "CHROMA_QUESTIONS_COLLECTION": "Questions",
+    "EMBEDDING_MODEL": "sentence-transformers/all-MiniLM-L6-v2",
+    "DENSE_QUERY_MODE": "collection",
+    "GENERATOR_BACKEND": "ollama",
+    "GENERATOR_MODEL_DEFAULT": "qwen2.5:7b-instruct-q4_K_M",
+    "OLLAMA_HOST": "http://127.0.0.1:11434",
+    "GENERATOR_TIMEOUT_SECONDS": 600,
+    "GENERATOR_MAX_CONTEXT_CHARS": 8000,
+    "GENERATOR_MAX_NEW_TOKENS": 256,
+    "GENERATOR_LOAD_ON_STARTUP": false,
+    "RRF_ALPHA": 20.0,
+    "RRF_BM25_WEIGHT": 1.0,
+    "RRF_DENSE_WEIGHT": 0.8,
+    "RRF_CANDIDATES": 50,
+    "TOP_K_DEFAULT": 10,
+    "BM25_CACHE_PATH": "data/bm25_store/bm25.joblib",
+    "ROUTER_ABSTAIN_MEAN_THRESHOLD": 0.0,
+    "ROUTER_ABSTAIN_STD_THRESHOLD": 0.2,
+    "ROUTER_FAST_MEAN_THRESHOLD": 0.89,
+    "CALIBRATOR_MODEL_PATH": "models/calibrator.pkl",
+    "RERANKER_MODEL": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "CRAG_RETRIEVAL_MULTIPLIER": 2,
+    "CRAG_PASSAGES_PER_DOC": 2,
+    "CRAG_MIN_RELEVANCE": 0.0,
+    "ABLATION_RUNS_DIR": "data/ablation_runs",
+    "CALIBRATION_REPORT_PATH": "data/calibration_report.json",
+    "RESULTS_DIR": "results"
+  },
+  "machine": {
+    "os": "Linux",
+    "python": "3.14.4",
+    "cpu": "13th Gen Intel Core i5-1335U",
+    "ram_gb": 15
+  }
+}
