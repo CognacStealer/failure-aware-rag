@@ -58,17 +58,18 @@ Question: with retrieval held fixed, how much does the generator matter?
 - **Judge controls** on 25 questions: each question's own gold answer (should pass) and
   a different question's gold answer (should fail).
 
-Preliminary, first 25 of 500 questions:
+Preliminary, first 100 of 500 questions:
 
 | Model | Correct | Score [95% CI] |
 |---|---|---|
-| Qwen2.5-7B | 56% | 0.47 [0.29, 0.65] |
-| Phi-3-mini | 44% | 0.32 [0.15, 0.51] |
-| phi-2 | 32% | 0.22 [0.09, 0.37] |
+| Qwen2.5-7B | 57% | 0.44 [0.35, 0.53] |
+| Phi-3-mini | 51% | 0.41 [0.31, 0.50] |
+| phi-2 | 40% | 0.31 [0.23, 0.40] |
 
-Judge controls: gold answers judged correct 100% (97% of facts found); another
-question's answer judged correct 0% (9% of facts falsely credited). Qwen's lead over
-both others is already significant; Phi-3 vs phi-2 is not yet.
+Judge controls (25 questions): gold answers judged correct 100% (97% of facts found);
+another question's answer judged correct 0% (9% of facts falsely credited). Qwen's lead
+over phi-2 is significant (+0.13 [0.03, 0.23]); Qwen vs Phi-3 (+0.04) is not - at 25
+questions it looked significant, which is why the run covers all 500.
 
 ## 4. Error attribution: retrieval or generation?
 
@@ -93,16 +94,19 @@ contexts, and it costs ~3 s per question instead of ~160 s. It is conservative: 
 reworded in the documents can be missed, which shifts some generation errors toward
 context loss.
 
-Preliminary, first 25 questions:
+Preliminary, first 100 questions:
 
 | Model | Correct | Generation error | Context loss | Retrieval miss |
 |---|---:|---:|---:|---:|
-| Qwen2.5-7B | 56% | 12% | 16% | 16% |
-| Phi-3-mini | 44% | 16% | 16% | 24% |
-| phi-2 | 32% | 28% | 24% | 16% |
+| Qwen2.5-7B | 57% | 22% | 13% | 8% |
+| Phi-3-mini | 51% | 20% | 17% | 12% |
+| phi-2 | 40% | 28% | 22% | 10% |
 
-For the strongest model most failures happen *before* generation; context loss - facts
-cut by the 4,500-character prompt budget - is a large share for every model.
+Failures split roughly evenly between generation and the stages before it (context loss
+plus retrieval miss: 21-32%). Context loss - facts cut by the 4,500-character prompt
+budget - stays a large share for every model, and weaker models add more generation
+errors. (At 25 questions the split looked tilted toward pre-generation failures; it did
+not hold up.)
 
 ### Lessons from building the judge
 

@@ -1,5 +1,38 @@
 [
   {
+    "id": "20261002T134437Z_full_benchmark",
+    "kind": "generator_ablation",
+    "title": "Generators on 100/500 questions (full_benchmark)",
+    "created_at": "2026-10-02T13:44:37.947762+00:00",
+    "headline": {
+      "Qwen2.5-7B-Instruct": 0.442,
+      "Phi-3-mini-4k-instruct": 0.405,
+      "phi-2": 0.313,
+      "n": 100
+    },
+    "path": "generator_ablation/20261002T134437Z_full_benchmark",
+    "files": [
+      "Phi-3-mini-4k-instruct.jsonl",
+      "Phi-3-mini-4k-instruct_judged.jsonl",
+      "Qwen2_5-7B-Instruct.jsonl",
+      "Qwen2_5-7B-Instruct_judged.jsonl",
+      "context_controls.jsonl",
+      "context_controls_llm_judge.jsonl",
+      "context_facts.jsonl",
+      "context_facts_llm_judge.jsonl",
+      "judge_sanity.jsonl",
+      "manifest.json",
+      "meta.json",
+      "per_question.csv",
+      "phi-2.jsonl",
+      "phi-2_judged.jsonl",
+      "result.json",
+      "retrieval.jsonl"
+    ],
+    "git_commit": "311758ed1c98910ff1ca5f8b36692d5003d32d7e",
+    "git_dirty": true
+  },
+  {
     "id": "20261001T185636Z_full_benchmark",
     "kind": "generator_ablation",
     "title": "Generators on 25/500 questions (full_benchmark)",

@@ -1,0 +1,25 @@
+{"question_id": "qst_0165", "facts_in_context": [true, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "seconds": 214.83}
+{"question_id": "qst_0384", "facts_in_context": [true, true, false, false, true, true, false, true, true, true, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 2, "seconds": 382.19}
+{"question_id": "qst_0046", "facts_in_context": [false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "seconds": 201.16}
+{"question_id": "qst_0157", "facts_in_context": [true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "seconds": 149.63}
+{"question_id": "qst_0054", "facts_in_context": [true, false, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "seconds": 106.84}
+{"question_id": "qst_0073", "facts_in_context": [true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "seconds": 105.61}
+{"question_id": "qst_0316", "facts_in_context": [true, true, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "seconds": 168.07}
+{"question_id": "qst_0210", "facts_in_context": [true, false, true, true, true, false, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 2, "seconds": 290.93}
+{"question_id": "qst_0075", "facts_in_context": [true, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "seconds": 126.09}
+{"question_id": "qst_0334", "facts_in_context": [true, false, true, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "seconds": 158.14}
+{"question_id": "qst_0404", "facts_in_context": [true, true, true, false, true, false, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 2, "seconds": 362.38}
+{"question_id": "qst_0416", "facts_in_context": [true, true, true, true, false, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "seconds": 194.26}
+{"question_id": "qst_0093", "facts_in_context": [true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "seconds": 164.25}
+{"question_id": "qst_0216", "facts_in_context": [true, true, true, true, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "seconds": 162.91}
+{"question_id": "qst_0480", "facts_in_context": [true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "seconds": 157.86}
+{"question_id": "qst_0060", "facts_in_context": [true, false, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "seconds": 165.66}
+{"question_id": "qst_0369", "facts_in_context": [true, true, true, true, true, true, true, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 2, "seconds": 310.15}
+{"question_id": "qst_0164", "facts_in_context": [true, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "seconds": 160.78}
+{"question_id": "qst_0211", "facts_in_context": [true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "seconds": 101.77}
+{"question_id": "qst_0252", "facts_in_context": [true, false, true, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "seconds": 95.99}
+{"question_id": "qst_0444", "facts_in_context": [true, true, true, true, true, true, false, false, true, true, false, false, true, true, true, true, true, true, false, false, true, true, false, false, true, false, true, true, true, true, true, true, true, true, true, true, true, false, true, true, true, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 8, "seconds": 727.04}
+{"question_id": "qst_0321", "facts_in_context": [true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "seconds": 106.32}
+{"question_id": "qst_0290", "facts_in_context": [true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "seconds": 90.0}
+{"question_id": "qst_0390", "facts_in_context": [true, true, true, false, true, true, true, true, true, true, true, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 3, "seconds": 331.13}
+{"question_id": "qst_0008", "facts_in_context": [true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1, "seconds": 98.07}
