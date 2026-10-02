@@ -44,6 +44,11 @@ Question types (500 total):
 
 ## How we load it
 
+`./setup.sh` (or `scripts/load_dataset.py` directly) downloads the dataset and builds both
+collections described below. `--sample 78053` gives a corpus of the reference size and makeup
+(every gold document plus seeded random distractors); the reference store's distractors were
+sampled differently, so numbers from a fresh build can differ slightly.
+
 - Documents live in a persistent **ChromaDB** collection `docs`, embedded with Chroma's
   default model (`all-MiniLM-L6-v2`, 384-d). Questions live in the `Questions` collection,
   with `expected_doc_ids`, `gold_answer` and `answer_facts` stored as metadata.

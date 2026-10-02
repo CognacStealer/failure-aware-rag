@@ -1,7 +1,7 @@
 # Workflow
 
 From an empty machine to a running website and saved results. Commands run from the
-repository root with the project's virtualenv (`../venv` in the author's layout).
+repository root; `./setup.sh` creates the virtualenv at `.venv`.
 
 ```mermaid
 flowchart TD
@@ -16,39 +16,40 @@ flowchart TD
     S4 --> W[Website: / and /dashboard]
 ```
 
-## 1. Install
+## 1-3. Setup in one command
 
 ```bash
-python -m venv ../venv && ../venv/bin/pip install -r requirements.txt
+./setup.sh
 ```
 
-Install [Ollama](https://ollama.com) and pull the models:
+It checks Python (3.10+), creates `.venv` and installs `requirements.txt`, checks
+Ollama and pulls the generator, loads the dataset into ChromaDB, adds every gold
+document, initialises the service (building the BM25 cache) and runs the tests. Every
+step is safe to re-run.
 
-```bash
-ollama pull qwen2.5:7b-instruct-q4_K_M      # generator
-ollama pull phi3:mini-4k && ollama pull phi:2.7b   # ablation candidates
-ollama pull llama3.1:8b-instruct-q4_K_M     # independent judge
-```
+| Option | Effect |
+|---|---|
+| `--sample N` | corpus size (default 78,053; all 722 gold documents are always included) |
+| `--skip-data` | environment and models only |
+| `--all-models` | also pull the ablation candidates (phi3, phi-2) and the judge (Llama 3.1 8B) |
+| `--skip-models`, `--skip-tests` | skip those steps |
+| `VENV=path` | use an existing virtualenv; `CHROMA_PATH=path` chooses the Chroma store |
 
-## 2. Load data into Chroma
+The steps it runs, if you prefer to do them by hand:
 
-Documents go into the `docs` collection and questions into `Questions`, with
-`expected_doc_ids`, `gold_answer`, `answer_facts` and `question_type` as metadata
-(see [DATASET.md](DATASET.md)). Set `CHROMA_PATH` if your store is elsewhere.
-
-## 3. Add the missing gold documents
-
-```bash
-PYTHONPATH=. ../venv/bin/python scripts/add_gold_docs.py --dry-run   # report only
-PYTHONPATH=. ../venv/bin/python scripts/add_gold_docs.py
-```
-
-Safe to re-run; it only adds gold documents that are absent.
+1. **Install:** `python -m venv .venv && .venv/bin/pip install -r requirements.txt`, then install
+   [Ollama](https://ollama.com/download) and `ollama pull qwen2.5:7b-instruct-q4_K_M`.
+2. **Load data:** `PYTHONPATH=. .venv/bin/python scripts/load_dataset.py` downloads EnterpriseRAG-Bench
+   and creates the `Questions` collection (gold document IDs, gold answer, answer facts and question
+   type as metadata) and the `docs` corpus (every gold document plus a seeded random sample, embedded
+   with all-MiniLM-L6-v2). Resumable and additive. See [DATASET.md](DATASET.md).
+3. **Gold documents:** `PYTHONPATH=. .venv/bin/python scripts/add_gold_docs.py` adds any gold
+   document missing from an existing corpus (a no-op after step 2).
 
 ## 4. Start the API and website
 
 ```bash
-../venv/bin/uvicorn main:app --port 8000
+.venv/bin/uvicorn main:app --port 8000
 ```
 
 - `http://localhost:8000/` - **Ask**: the real-time engine
@@ -79,7 +80,7 @@ as it finishes and resume after an interruption. Logs are in `data/logs/`.
 Snapshot an in-progress ablation at any time:
 
 ```bash
-PYTHONPATH=.:scripts ../venv/bin/python scripts/run_local_generator_ablation.py --summarize --save
+PYTHONPATH=.:scripts .venv/bin/python scripts/run_local_generator_ablation.py --summarize --save
 ```
 
 ## Results store
@@ -92,7 +93,7 @@ version). `results/index.json` and `results/README.md` list them all; the Monito
 ## Tests
 
 ```bash
-../venv/bin/python -m unittest discover -s tests -t .
+.venv/bin/python -m unittest discover -s tests -t .
 ```
 
 Unit tests use fakes, so they need neither Chroma nor Ollama.

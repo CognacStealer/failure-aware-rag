@@ -10,7 +10,8 @@
 set -uo pipefail
 
 cd "$(dirname "$0")/.."
-PYTHON="${PYTHON:-../venv/bin/python}"
+# The virtualenv setup.sh creates (.venv), else the author's sibling ../venv.
+if [ -z "${PYTHON:-}" ]; then [ -x .venv/bin/python ] && PYTHON=.venv/bin/python || PYTHON=../venv/bin/python; fi
 export PYTHONPATH=".:scripts"
 # Leave cores free for the interactive website: 6 of 12 threads for torch/BLAS here,
 # and 6 Ollama threads for the ablation's model calls.
