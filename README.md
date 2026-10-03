@@ -41,11 +41,12 @@ component and the reason behind it: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
 ```bash
 git clone https://github.com/CognacStealer/failure-aware-rag.git && cd failure-aware-rag
-./setup.sh                  # environment, Ollama model, dataset, checks (~45 min to embed the corpus on CPU)
+./setup.sh                  # environment, Ollama model, dataset, calibrator, checks (~45 min to embed the corpus on CPU)
 .venv/bin/uvicorn main:app --port 8000
 ```
 
 `./setup.sh --sample 5000` builds a smaller corpus in minutes; `./setup.sh --help` lists every option.
+`make help` lists shortcuts for setup, evaluation, the website and tests.
 [Ollama](https://ollama.com/download) must be installed for answers to be generated.
 
 - `http://localhost:8000/` - **Ask**: real-time engine (live pipeline, streaming answer, sources)
@@ -67,6 +68,7 @@ tests/       unit tests (no Chroma or Ollama needed)
 results/     saved experiment results with provenance
 models/      trained calibrator
 setup.sh     one-command setup
+Makefile     shortcuts: make help
 docs/        dataset, architecture, workflow, evaluation, roadmap
 ```
 

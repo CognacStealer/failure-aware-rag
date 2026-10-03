@@ -16,7 +16,7 @@ flowchart TD
     S4 --> W[Website: / and /dashboard]
 ```
 
-## 1-3. Setup in one command
+## 1-5. Setup in one command
 
 ```bash
 ./setup.sh
@@ -24,15 +24,19 @@ flowchart TD
 
 It checks Python (3.10+), creates `.venv` and installs `requirements.txt`, checks
 Ollama and pulls the generator, loads the dataset into ChromaDB, adds every gold
-document, initialises the service (building the BM25 cache) and runs the tests. Every
-step is safe to re-run.
+document, trains the routing calibrator, initialises the service (building the BM25
+cache) and runs the tests. Every step is safe to re-run.
+
+The calibrator is trained during setup rather than shipped, because it is fitted on this
+machine's corpus and retrieval. Without it every query falls back to the Corrective track.
 
 | Option | Effect |
 |---|---|
 | `--sample N` | corpus size (default 78,053; all 722 gold documents are always included) |
 | `--skip-data` | environment and models only |
 | `--all-models` | also pull the ablation candidates (phi3, phi-2) and the judge (Llama 3.1 8B) |
-| `--skip-models`, `--skip-tests` | skip those steps |
+| `--retrain-calibrator` | refit the calibrator even if `models/calibrator.pkl` exists |
+| `--skip-models`, `--skip-calibrator`, `--skip-tests` | skip those steps |
 | `VENV=path` | use an existing virtualenv; `CHROMA_PATH=path` chooses the Chroma store |
 
 The steps it runs, if you prefer to do them by hand:
@@ -45,6 +49,8 @@ The steps it runs, if you prefer to do them by hand:
    with all-MiniLM-L6-v2). Resumable and additive. See [DATASET.md](DATASET.md).
 3. **Gold documents:** `PYTHONPATH=. .venv/bin/python scripts/add_gold_docs.py` adds any gold
    document missing from an existing corpus (a no-op after step 2).
+4. **Calibrator:** `scripts/run_pipeline.sh train_calibrator` (or `make calibrator`) fits the
+   30-model ensemble on the train split, about 2 minutes on CPU.
 
 ## 4. Start the API and website
 
@@ -57,6 +63,11 @@ The steps it runs, if you prefer to do them by hand:
 - `http://localhost:8000/docs` - OpenAPI reference
 
 The first start builds the BM25 cache (~1 minute); later starts take ~1.5 s.
+
+## Make targets
+
+`make help` lists shortcuts for the commands on this page: `setup`, `calibrator`, `eval`,
+`ablation`, `snapshot`, `serve` and `test`. Each one calls the scripts described here.
 
 ## 5-8. Experiments
 

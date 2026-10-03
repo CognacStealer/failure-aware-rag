@@ -5,6 +5,7 @@
 #   ./setup.sh --sample 5000         # smaller corpus, ready in minutes (all 722 gold docs are always included)
 #   ./setup.sh --skip-data           # environment and models only
 #   ./setup.sh --all-models          # also pull the ablation candidates and the judge
+#   ./setup.sh --retrain-calibrator  # refit the routing calibrator even if one exists
 #   VENV=../venv ./setup.sh          # use an existing virtualenv
 #
 # Every step is safe to re-run: installs are idempotent, the data load only adds what
@@ -18,6 +19,8 @@ SAMPLE=78053
 SKIP_DATA=0
 SKIP_MODELS=0
 SKIP_TESTS=0
+SKIP_CALIBRATOR=0
+RETRAIN_CALIBRATOR=0
 ALL_MODELS=0
 GENERATOR_MODEL="${GENERATOR_MODEL:-qwen2.5:7b-instruct-q4_K_M}"
 ABLATION_MODELS=(phi3:mini-4k phi:2.7b llama3.1:8b-instruct-q4_K_M)
@@ -30,6 +33,8 @@ while [ $# -gt 0 ]; do
     --skip-data) SKIP_DATA=1 ;;
     --skip-models) SKIP_MODELS=1 ;;
     --skip-tests) SKIP_TESTS=1 ;;
+    --skip-calibrator) SKIP_CALIBRATOR=1 ;;
+    --retrain-calibrator) RETRAIN_CALIBRATOR=1 ;;
     --all-models) ALL_MODELS=1 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "unknown option: $1" >&2; usage; exit 2 ;;
@@ -41,6 +46,9 @@ step() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
 ok()   { printf '    \033[32mok\033[0m  %s\n' "$*"; }
 warn() { printf '    \033[33m!!\033[0m  %s\n' "$*"; }
 die()  { printf '    \033[31mxx\033[0m  %s\n' "$*" >&2; exit 1; }
+has_corpus() {
+  "$PY" -c 'import chromadb, config; chromadb.PersistentClient(path=config.CHROMA_PATH).get_collection(config.CHROMA_DOCS_COLLECTION)' 2>/dev/null
+}
 
 # ---------------------------------------------------------------------------
 step "Python"
@@ -113,8 +121,29 @@ EOF
 fi
 
 # ---------------------------------------------------------------------------
+step "Calibrator (adaptive routing)"
+# The calibrator is fitted on this machine's corpus and retrieval, so it is trained
+# here rather than shipped. Without it every query goes to the Corrective track.
+CALIBRATOR_FILE="$("$PY" -c 'import config; print(config.CALIBRATOR_MODEL_PATH)')"
+if [ "$SKIP_CALIBRATOR" = 1 ]; then
+  ok "skipped (--skip-calibrator)"
+elif [ -f "$CALIBRATOR_FILE" ] && [ "$RETRAIN_CALIBRATOR" = 0 ]; then
+  ok "already trained: $CALIBRATOR_FILE (refit with --retrain-calibrator)"
+elif ! has_corpus; then
+  warn "no corpus yet - skipped (run ./setup.sh without --skip-data)"
+else
+  echo "    fitting 30 logistic regressions on the train split (~2 min on CPU)"
+  mkdir -p data/logs
+  if "$PY" scripts/train_calibrator.py > data/logs/train_calibrator.log 2>&1; then
+    ok "saved to $CALIBRATOR_FILE (log: data/logs/train_calibrator.log)"
+  else
+    warn "training failed - see data/logs/train_calibrator.log; queries will use the Corrective track"
+  fi
+fi
+
+# ---------------------------------------------------------------------------
 step "Service check (builds the BM25 cache on first run)"
-if [ "$SKIP_DATA" = 1 ] && [ "${docs_count:-0}" = 0 ] && ! "$PY" -c 'import chromadb, config; chromadb.PersistentClient(path=config.CHROMA_PATH).get_collection(config.CHROMA_DOCS_COLLECTION)' 2>/dev/null; then
+if ! has_corpus; then
   warn "no corpus yet - skipped (run ./setup.sh without --skip-data)"
 else
   "$PY" - <<'EOF'
@@ -150,5 +179,5 @@ cat <<EOF
         http://localhost:8000/docs        API reference
 
     Re-run every evaluation (results are saved to results/):
-        scripts/run_pipeline.sh
+        scripts/run_pipeline.sh        (or: make eval, make ablation; see: make help)
 EOF
