@@ -21,6 +21,8 @@ import json
 import random
 import re
 import time
+import http.client
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -48,6 +50,25 @@ def append_jsonl(path: Path, row: dict) -> None:
         sink.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
+# A multi-day run must survive Ollama dropping a connection (it did once, 125 questions in,
+# and the whole run stopped); a few retries with growing waits cost seconds instead.
+OLLAMA_RETRY_WAITS = (15, 30, 60, 120)
+
+
+def post_json(url: str, body: dict, timeout: int) -> dict:
+    data = json.dumps(body).encode()
+    for attempt, wait in enumerate((*OLLAMA_RETRY_WAITS, None), 1):
+        request = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                return json.load(response)
+        except (urllib.error.URLError, http.client.HTTPException, ConnectionError, TimeoutError) as exc:
+            if wait is None:
+                raise
+            print(f"ollama call failed ({type(exc).__name__}: {exc}); retry {attempt} in {wait}s", flush=True)
+            time.sleep(wait)
+
+
 def ollama_chat(host: str, model: str, prompt: str, *, num_ctx: int, max_tokens: int,
                 timeout: int, threads: int | None, json_mode: bool = False, seed: int = 0,
                 keep_alive: int | str = 0) -> dict:
@@ -66,23 +87,11 @@ def ollama_chat(host: str, model: str, prompt: str, *, num_ctx: int, max_tokens:
     }
     if json_mode:
         body["format"] = "json"
-    request = urllib.request.Request(
-        f"{host.rstrip('/')}/api/chat",
-        data=json.dumps(body).encode(),
-        headers={"Content-Type": "application/json"},
-    )
-    with urllib.request.urlopen(request, timeout=timeout) as response:
-        return json.load(response)
+    return post_json(f"{host.rstrip('/')}/api/chat", body, timeout)
 
 
 def unload(host: str, model: str) -> None:
-    request = urllib.request.Request(
-        f"{host.rstrip('/')}/api/generate",
-        data=json.dumps({"model": model, "keep_alive": 0}).encode(),
-        headers={"Content-Type": "application/json"},
-    )
-    with urllib.request.urlopen(request, timeout=120):
-        pass
+    post_json(f"{host.rstrip('/')}/api/generate", {"model": model, "keep_alive": 0}, timeout=120)
 
 
 def load_all_questions(client) -> list[dict]:
