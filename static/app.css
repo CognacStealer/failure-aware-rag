@@ -183,3 +183,9 @@ details.data table { margin-top:6px }
 .stack > div { min-width:2px }
 .outcome-row { display:grid; grid-template-columns:180px minmax(0,1fr) 64px; gap:12px; align-items:center; margin:10px 0 }
 @media (max-width:640px) { .outcome-row { grid-template-columns:1fr } }
+
+/* trace panel */
+.trace-actions { display:flex; gap:8px }
+.trace { margin:0; max-height:480px; overflow:auto; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:12px;
+  line-height:1.5; white-space:pre; background:var(--hover); border-radius:8px; padding:12px; color:var(--text) }
+.tl-fn { margin-top:4px } .tl-fn code { font-size:11px; overflow-wrap:anywhere }

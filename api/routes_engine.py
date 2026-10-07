@@ -2,6 +2,7 @@
 
 import json
 import random
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
@@ -28,6 +29,28 @@ def _sse(event: dict) -> str:
     return f"event: {event['type']}\ndata: {json.dumps(event)}\n\n"
 
 
+def _log_trace(body: StreamRequest, done: dict) -> None:
+    """Print the request's trace as JSON to the server log and keep a copy on disk."""
+    record = {
+        "time": datetime.now(timezone.utc).isoformat(),
+        "query": body.query,
+        "strategy": body.strategy,
+        "top_k": body.top_k,
+        "track": done.get("track"),
+        "confidence": done.get("confidence"),
+        "answer": done.get("answer"),
+        "total_ms": done.get("total_ms"),
+        "trace": done.get("trace", []),
+    }
+    print(json.dumps(record, indent=2, ensure_ascii=False), flush=True)
+    try:
+        config.ENGINE_TRACE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with config.ENGINE_TRACE_PATH.open("a", encoding="utf-8") as sink:
+            sink.write(json.dumps(record, ensure_ascii=False) + "\n")
+    except OSError as exc:  # the trace is a convenience; never fail the request over it
+        print(f"could not write {config.ENGINE_TRACE_PATH}: {exc}", flush=True)
+
+
 @router.post("/stream")
 def stream(body: StreamRequest, request: Request):
     service = request.app.state.rag
@@ -37,6 +60,8 @@ def stream(body: StreamRequest, request: Request):
     def events():
         try:
             for event in engine.run(service, body.query, body.top_k, body.strategy):
+                if event["type"] == "done" and config.ENGINE_TRACE_LOG:
+                    _log_trace(body, event)
                 yield _sse(event)
         except Exception as exc:  # report failures in-stream; the HTTP status is already sent
             yield _sse({"type": "error", "message": f"{type(exc).__name__}: {exc}"})

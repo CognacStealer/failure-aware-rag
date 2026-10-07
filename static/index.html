@@ -152,6 +152,16 @@
         <div class="card-head"><div><h2>Sources</h2><p id="sources-sub">Documents passed to the generator</p></div></div>
         <div class="card-body grid sources" id="sources"><div class="placeholder small">No sources yet.</div></div>
       </section>
+      <section class="card mt" aria-label="Trace">
+        <div class="card-head">
+          <div><h2>Trace (JSON)</h2><p id="trace-sub">Functions called, documents at each stage and the exact prompt</p></div>
+          <div class="trace-actions">
+            <button class="btn ghost" id="trace-copy" type="button" disabled>Copy</button>
+            <button class="btn ghost" id="trace-download" type="button" disabled>Download</button>
+          </div>
+        </div>
+        <div class="card-body"><pre class="trace" id="trace">The trace appears when a question finishes.</pre></div>
+      </section>
     </div>
   </div>
 </div>
@@ -239,7 +249,7 @@ function renderTimeline(plan) {
     const icon = { done: '✓', skipped: '–' }[s.status] || '';
     return `<li class="tl ${s.status}"><span class="tl-icon" aria-hidden="true">${icon}</span>
       <span class="tl-name">${esc(STAGES[stage])}</span><span class="tl-ms">${s.ms != null ? s.ms + ' ms' : s.status === 'running' ? 'running' : ''}</span>
-      <div class="tl-detail">${stageDetail(stage, s)}</div></li>`;
+      <div class="tl-detail">${stageDetail(stage, s)}${fnLine(s)}</div></li>`;
   }).join('');
 }
 function docList(top, key, label) {
@@ -262,6 +272,7 @@ function stageDetail(stage, s) {
   }
   return '';
 }
+function fnLine(s) { return s.function ? `<div class="tl-fn"><code>${esc(s.function)}</code></div>` : ''; }
 
 /* answer + sources */
 function renderGauge(confidence, thresholds) {
@@ -286,6 +297,28 @@ function renderSources(docs) {
   }).join('') : '<div class="placeholder small">No documents.</div>';
 }
 
+/* trace */
+let lastTrace = null;
+function showTrace(record) {
+  lastTrace = record;
+  $('trace').textContent = record ? JSON.stringify(record, null, 2) : 'The trace appears when a question finishes.';
+  $('trace-sub').textContent = record
+    ? `${record.trace.length} steps · ${record.trace.filter(t => t.status === 'done').map(t => t.stage).join(' → ')}`
+    : 'Functions called, documents at each stage and the exact prompt';
+  $('trace-copy').disabled = $('trace-download').disabled = !record;
+}
+$('trace-copy').onclick = async () => {
+  try { await navigator.clipboard.writeText($('trace').textContent); $('trace-copy').textContent = 'Copied'; }
+  catch { $('trace-copy').textContent = 'Copy failed'; }
+  setTimeout(() => { $('trace-copy').textContent = 'Copy'; }, 1500);
+};
+$('trace-download').onclick = () => {
+  if (!lastTrace) return;
+  const url = URL.createObjectURL(new Blob([JSON.stringify(lastTrace, null, 2)], { type: 'application/json' }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: `rag-trace-${Date.now()}.json` });
+  a.click(); URL.revokeObjectURL(url);
+};
+
 /* streaming */
 async function ask() {
   const query = $('query').value.trim();
@@ -294,6 +327,7 @@ async function ask() {
   controller = new AbortController();
   $('ask').disabled = true; $('stop').hidden = false;
   stageState = {}; let plan = [], thresholds = null, answer = '';
+  showTrace(null);
   $('answer').className = 'answer-text streaming'; $('answer').textContent = '';
   $('answer-sub').textContent = 'Running…'; $('answer-meta').innerHTML = `<span class="badge">${esc(strategy)}</span>`;
   $('gauge').hidden = true; $('sources').innerHTML = '<div class="placeholder small">Retrieving…</div>';
@@ -330,6 +364,8 @@ async function ask() {
           $('answer').textContent = e.answer || answer;
           $('answer-sub').textContent = `Answered in ${(e.total_ms / 1000).toFixed(1)} s`;
           $('answer-meta').innerHTML = `<span class="badge">${esc(strategy)}</span><span class="badge ${e.track === 'Abstain' ? '' : 'ok'}">${esc(e.track)} track</span>`;
+          showTrace({ query, strategy, top_k: +$('topk').value, track: e.track, confidence: e.confidence,
+                      answer: e.answer, timings_ms: e.timings_ms, total_ms: e.total_ms, trace: e.trace });
         }
         else if (e.type === 'error') throw new Error(e.message);
       }

@@ -106,6 +106,26 @@ class EngineTests(unittest.TestCase):
         sources = next(e for e in crag if e["type"] == "sources")["documents"]
         self.assertEqual([d["doc_id"] for d in sources], [d["doc_id"] for d in service.crag.retrieve_corrected("q", 2)])
 
+    def test_trace_names_each_function_and_its_documents(self):
+        service = make_service(mean=0.5)
+        events = list(engine.run(service, "q", 3, "adaptive"))
+        trace = events[-1]["trace"]
+        self.assertEqual([(t["stage"], t["status"]) for t in trace], stages(events))
+        self.assertEqual([t["step"] for t in trace], list(range(1, len(trace) + 1)))
+        by_stage = {t["stage"]: t for t in trace}
+        self.assertEqual(by_stage["fusion"]["function"], "core.hybrid_rrf.reciprocal_rank_fusion")
+        self.assertEqual(by_stage["route"]["function"], "core.router.AdaptiveRouter.route")
+        self.assertEqual(by_stage["route"]["outputs"]["track"], "Corrective")
+        sources = next(e for e in events if e["type"] == "sources")["documents"]
+        self.assertEqual([d["doc_id"] for d in by_stage["generate"]["inputs"]["documents"]],
+                         [d["doc_id"] for d in sources])
+        self.assertEqual(by_stage["dense"]["outputs"]["count"], len(by_stage["dense"]["outputs"]["documents"]))
+
+    def test_trace_records_skipped_stages(self):
+        trace = list(engine.run(make_service(mean=0.1), "q", 3, "adaptive"))[-1]["trace"]
+        self.assertEqual(trace[-1]["stage"], "generate")
+        self.assertEqual(trace[-1]["status"], "skipped")
+
     def test_unknown_strategy_is_rejected(self):
         with self.assertRaises(ValueError):
             list(engine.run(make_service(0.5), "q", 2, "bogus"))

@@ -92,6 +92,11 @@ the answer as Ollama produces it.
 - **`index.html` - Ask (real-time engine).** Streams `/engine/stream`: a live pipeline
   timeline (each stage's status, timing and findings), the calibrator's confidence on a
   gauge with routing thresholds, the answer token by token, and the sources with every score.
+  A **Trace (JSON)** panel shows, for each step, the function that ran (module, class and
+  method), its inputs, every document it returned with scores, its timing, and the exact
+  prompt sent to the model; it can be copied or downloaded. The server also prints each
+  trace as JSON to its log and appends it to `data/logs/engine_traces.jsonl`
+  (`ENGINE_TRACE_LOG=false` turns both off).
 - **`ablation.html` - Monitor.** Overview of the running model comparison, Calibrator
   evidence, the answer feed, and the results store.
 - **`app.css`** - shared design system (light/dark themes, validated color palette).

@@ -37,6 +37,10 @@ BM25_CACHE_PATH = Path(os.getenv("BM25_CACHE_PATH", "data/bm25_store/bm25.joblib
 ROUTER_ABSTAIN_MEAN_THRESHOLD = float(os.getenv("ROUTER_ABSTAIN_MEAN_THRESHOLD", "0.0"))
 ROUTER_ABSTAIN_STD_THRESHOLD = float(os.getenv("ROUTER_ABSTAIN_STD_THRESHOLD", "0.2"))
 ROUTER_FAST_MEAN_THRESHOLD = float(os.getenv("ROUTER_FAST_MEAN_THRESHOLD", "0.89"))
+# Print each live-engine request's trace (functions called, documents, prompt) as JSON to the
+# server log and append it to ENGINE_TRACE_PATH. Set ENGINE_TRACE_LOG=false to turn off.
+ENGINE_TRACE_LOG = os.getenv("ENGINE_TRACE_LOG", "true").lower() == "true"
+ENGINE_TRACE_PATH = Path(os.getenv("ENGINE_TRACE_PATH", "data/logs/engine_traces.jsonl"))
 CALIBRATOR_MODEL_PATH = Path(os.getenv("CALIBRATOR_MODEL_PATH", "models/calibrator.pkl"))
 
 RERANKER_MODEL = os.getenv("RERANKER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
