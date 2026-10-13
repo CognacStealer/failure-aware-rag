@@ -53,43 +53,44 @@ Routing matches always-rerank recall and saves 14% of its retrieval time. [Evalu
 
 ## Generator comparison
 
-Same retrieved context for every model; answers graded by an independent judge (`llama3.1:8b-instruct-q4_K_M`). **100 of 500 questions graded so far.**
+Same retrieved context for every model; answers graded by an independent judge (`llama3.1:8b-instruct-q4_K_M`). **499 of 500 questions graded so far.**
 
 | Model | Correct | Facts stated | Score | 95% interval | Avg. answer time |
 |---|---:|---:|---:|---|---:|
-| Qwen2.5-7B-Instruct | 57% | 71% | **0.44** | 0.35 – 0.53 | 94 s |
-| Phi-3-mini-4k-instruct | 51% | 72% | **0.41** | 0.31 – 0.50 | 77 s |
-| phi-2 | 40% | 71% | **0.31** | 0.23 – 0.40 | 55 s |
+| Qwen2.5-7B-Instruct | 57% | 65% | **0.39** | 0.35 – 0.43 | 313 s |
+| Phi-3-mini-4k-instruct | 52% | 66% | **0.37** | 0.33 – 0.41 | 129 s |
+| phi-2 | 37% | 68% | **0.28** | 0.24 – 0.31 | 133 s |
 
 Score = correct × share of gold facts stated.
 
 | Comparison | Score difference | 95% interval | Verdict |
 |---|---:|---|---|
-| Qwen2.5-7B-Instruct vs Phi-3-mini-4k-instruct | +0.04 | -0.06 – +0.13 | not yet distinguishable |
-| Qwen2.5-7B-Instruct vs phi-2 | +0.13 | +0.03 – +0.23 | real difference |
-| Phi-3-mini-4k-instruct vs phi-2 | +0.09 | -0.02 – +0.21 | not yet distinguishable |
+| Qwen2.5-7B-Instruct vs Phi-3-mini-4k-instruct | +0.02 | -0.01 – +0.06 | not yet distinguishable |
+| Qwen2.5-7B-Instruct vs phi-2 | +0.11 | +0.07 – +0.16 | real difference |
+| Phi-3-mini-4k-instruct vs phi-2 | +0.09 | +0.04 – +0.13 | real difference |
 
 ### Why answers fail
 
-For 100 questions a cross-encoder checked which gold facts reached each model's
-context (50% on average; 54% of questions had at least 50% of their facts in context). Each wrong answer is traced to the
+For 499 questions a cross-encoder checked which gold facts reached each model's
+context (54% on average; 58% of questions had at least 50% of their facts in context). Each wrong answer is traced to the
 stage that lost the evidence: a *generation error* had the evidence and still failed, *context loss*
 retrieved the documents but not the facts into the prompt, a *retrieval miss* never found the documents.
 
 | Model | Correct | Generation error | Context loss | Retrieval miss | Missed abstention |
 |---|---:|---:|---:|---:|---:|
-| Qwen2.5-7B-Instruct | 57 (57%) | 22 (22%) | 13 (13%) | 8 (8%) | 0 (0%) |
-| Phi-3-mini-4k-instruct | 51 (51%) | 20 (20%) | 17 (17%) | 12 (12%) | 0 (0%) |
-| phi-2 | 40 (40%) | 28 (28%) | 22 (22%) | 10 (10%) | 0 (0%) |
+| Qwen2.5-7B-Instruct | 286 (57%) | 124 (25%) | 60 (12%) | 29 (6%) | 0 (0%) |
+| Phi-3-mini-4k-instruct | 259 (52%) | 132 (26%) | 62 (12%) | 45 (9%) | 1 (0%) |
+| phi-2 | 184 (37%) | 168 (34%) | 77 (15%) | 55 (11%) | 15 (3%) |
 
 Context check false-positive rate (facts credited to another question's context): 1% on 25 controls.
 
-Judge check on 25 questions: gold answers judged correct 100%; another question's answer judged correct 0% (9% of its facts falsely credited). [Answers, judgments and per-question table](generator_ablation/20261002T134437Z_full_benchmark)
+Judge check on 25 questions: gold answers judged correct 100%; another question's answer judged correct 0% (9% of its facts falsely credited). [Answers, judgments and per-question table](generator_ablation/20261013T174408Z_full_benchmark)
 
 ## All saved results
 
 | Date (UTC) | Experiment | Headline | Folder | Commit |
 |---|---|---|---|---|
+| 2026-10-13 17:44 | Generator ablation: Generators on 499/500 questions (full_benchmark) | Qwen2.5-7B-Instruct 0.390, Phi-3-mini-4k-instruct 0.366, phi-2 0.279, n 499 | [20261013T174408Z_full_benchmark](generator_ablation/20261013T174408Z_full_benchmark) | `134efe2 + local changes` |
 | 2026-10-02 13:44 | Generator ablation: Generators on 100/500 questions (full_benchmark) | Qwen2.5-7B-Instruct 0.442, Phi-3-mini-4k-instruct 0.405, phi-2 0.313, n 100 | [20261002T134437Z_full_benchmark](generator_ablation/20261002T134437Z_full_benchmark) | `311758e + local changes` |
 | 2026-10-01 18:56 | Generator ablation: Generators on 25/500 questions (full_benchmark) | Qwen2.5-7B-Instruct 0.472, Phi-3-mini-4k-instruct 0.317, phi-2 0.222, n 25 | [20261001T185636Z_full_benchmark](generator_ablation/20261001T185636Z_full_benchmark) | `e9c3930 + local changes` |
 | 2026-10-01 17:44 | Calibrator evaluation: Calibrator routing and calibration, 245 test questions | auc 0.725, adaptive recall 0.730, crag recall 0.730, time saved 0.140 | [20261001T174412Z](calibrator_eval/20261001T174412Z) | `7029d01 + local changes` |
