@@ -4,8 +4,8 @@
 
 | Item | Status |
 |---|---|
-| Generator ablation on all 500 questions | **Running** (crash-safe, ~2-3 days on CPU) with per-question error attribution |
-| Context assembly | Next: context loss causes 13-22% of wrong answers; give the prompt the passages that contain the facts rather than an equal budget per document |
+| Generator ablation on all 500 questions | Done: see [EVALUATION.md](EVALUATION.md); results in `results/generator_ablation/` |
+| Context assembly | Next: context loss is the outcome for 12-15% of questions (about a quarter of wrong answers); give the prompt the passages that contain the facts rather than an equal budget per document |
 | Calibrator evaluation (cost/quality frontier, reliability, selective answering) | Done; selective answering fills in as the ablation grades more held-out questions |
 | `core/retriever_faiss.py` | Empty placeholder from the initial scaffold; not used |
 | Chunked dense index | Deferred: embedding 78k documents in chunks is a ~7 h CPU job. Today the cross-encoder grades the best passages at query time instead |
