@@ -1,0 +1,25 @@
+{"question_id": "qst_0165", "context_of": "qst_0384", "facts_in_context": [false, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1}
+{"question_id": "qst_0384", "context_of": "qst_0046", "facts_in_context": [true, true, false, false, true, true, false, false, false, false, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 2}
+{"question_id": "qst_0046", "context_of": "qst_0157", "facts_in_context": [true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1}
+{"question_id": "qst_0157", "context_of": "qst_0054", "facts_in_context": [true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1}
+{"question_id": "qst_0054", "context_of": "qst_0073", "facts_in_context": [true, false, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1}
+{"question_id": "qst_0073", "context_of": "qst_0316", "facts_in_context": [true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1}
+{"question_id": "qst_0316", "context_of": "qst_0210", "facts_in_context": [true, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1}
+{"question_id": "qst_0210", "context_of": "qst_0075", "facts_in_context": [true, true, true, true, true, true, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 2}
+{"question_id": "qst_0075", "context_of": "qst_0334", "facts_in_context": [true, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1}
+{"question_id": "qst_0334", "context_of": "qst_0404", "facts_in_context": [false, false, true, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1}
+{"question_id": "qst_0404", "context_of": "qst_0416", "facts_in_context": [true, true, true, false, false, false, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 2}
+{"question_id": "qst_0416", "context_of": "qst_0093", "facts_in_context": [false, false, true, true, false, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1}
+{"question_id": "qst_0093", "context_of": "qst_0216", "facts_in_context": [false, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1}
+{"question_id": "qst_0216", "context_of": "qst_0480", "facts_in_context": [true, true, true, true, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1}
+{"question_id": "qst_0480", "context_of": "qst_0060", "facts_in_context": [true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1}
+{"question_id": "qst_0060", "context_of": "qst_0369", "facts_in_context": [false, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1}
+{"question_id": "qst_0369", "context_of": "qst_0164", "facts_in_context": [false, false, false, false, true, true, true, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 2}
+{"question_id": "qst_0164", "context_of": "qst_0211", "facts_in_context": [false, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1}
+{"question_id": "qst_0211", "context_of": "qst_0252", "facts_in_context": [true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1}
+{"question_id": "qst_0252", "context_of": "qst_0444", "facts_in_context": [false, false, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1}
+{"question_id": "qst_0444", "context_of": "qst_0321", "facts_in_context": [true, true, true, true, true, true, false, false, true, true, true, true, true, true, true, true, true, true, false, false, true, true, true, false, false, false, true, true, true, true, false, true, true, true, true, true, true, false, true, true, true, true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 8}
+{"question_id": "qst_0321", "context_of": "qst_0290", "facts_in_context": [true, true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1}
+{"question_id": "qst_0290", "context_of": "qst_0390", "facts_in_context": [true, false], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1}
+{"question_id": "qst_0390", "context_of": "qst_0008", "facts_in_context": [true, true, true, false, true, true, true, true, true, true, true, true, null], "facts_ungraded": 1, "judge_parse_ok": false, "judge_calls": 3}
+{"question_id": "qst_0008", "context_of": "qst_0165", "facts_in_context": [true], "facts_ungraded": 0, "judge_parse_ok": true, "judge_calls": 1}

@@ -16,7 +16,7 @@ gold documents, gold answers and per-answer facts. See [docs/DATASET.md](docs/DA
 |---|---|
 | Retrieval recall@10 | hybrid **0.716**, CRAG **0.730**, adaptive **0.726** (dense alone 0.388) |
 | Calibrator | AUC **0.725**; Brier 0.202 vs 0.232 for a constant guess |
-| Generators (first 100 of 500 questions) | Qwen2.5-7B **0.44**, Phi-3-mini 0.41, phi-2 0.31 (judge: Llama 3.1 8B) |
+| Generators (all 500 questions) | Qwen2.5-7B **0.39**, Phi-3-mini 0.37, phi-2 0.28 (judge: Llama 3.1 8B); Qwen and Phi-3 are statistically tied, both beat phi-2 |
 
 Full method and caveats: [docs/EVALUATION.md](docs/EVALUATION.md). Every saved result,
 with its git commit and config: [results/README.md](results/README.md).
@@ -74,8 +74,8 @@ docs/        dataset, architecture, workflow, evaluation, roadmap
 
 ## Status
 
-Under construction - the 500-question generator comparison is running (100 done); next up
-are context assembly and bandit-based (RL) routing. See [docs/ROADMAP.md](docs/ROADMAP.md).
+Under construction - the 500-question generator comparison is complete; next up are
+context assembly and bandit-based (RL) routing. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Requirements
 

@@ -58,18 +58,29 @@ Question: with retrieval held fixed, how much does the generator matter?
 - **Judge controls** on 25 questions: each question's own gold answer (should pass) and
   a different question's gold answer (should fail).
 
-Preliminary, first 100 of 500 questions:
+All 500 questions (499 graded for every model; one is excluded because the judge's
+output could not be parsed):
 
-| Model | Correct | Score [95% CI] |
-|---|---|---|
-| Qwen2.5-7B | 57% | 0.44 [0.35, 0.53] |
-| Phi-3-mini | 51% | 0.41 [0.31, 0.50] |
-| phi-2 | 40% | 0.31 [0.23, 0.40] |
+| Model | Correct [95% CI] | Facts stated | Score [95% CI] |
+|---|---|---|---|
+| Qwen2.5-7B | 57.3% [53.1, 61.7] | 64.6% | 0.39 [0.35, 0.43] |
+| Phi-3-mini | 51.9% [47.5, 56.3] | 65.8% | 0.37 [0.33, 0.41] |
+| phi-2 | 36.9% [32.7, 41.1] | 68.3% | 0.28 [0.24, 0.31] |
+
+Paired differences in score: Qwen over phi-2 +0.11 [0.07, 0.16] and Phi-3 over phi-2
++0.09 [0.04, 0.13] are significant; Qwen over Phi-3 (+0.02 [-0.01, 0.06]) is not. At 25
+questions Qwen's lead over Phi-3 looked significant, and at 100 Phi-3's lead over phi-2
+did not, which is why the run covers all 500.
+
+On the 20 unanswerable questions, Qwen says "not found" every time and Phi-3 on 19;
+phi-2 does so on 5 and answers the rest.
 
 Judge controls (25 questions): gold answers judged correct 100% (97% of facts found);
-another question's answer judged correct 0% (9% of facts falsely credited). Qwen's lead
-over phi-2 is significant (+0.13 [0.03, 0.23]); Qwen vs Phi-3 (+0.04) is not - at 25
-questions it looked significant, which is why the run covers all 500.
+another question's answer judged correct 0% (9% of facts falsely credited).
+
+Generation times in the final snapshot are not representative: the run was interrupted
+by seven laptop shutdowns and shared the CPU with the website. Use the timings in the
+100-question snapshot (94 s, 77 s and 55 s per answer).
 
 ## 4. Error attribution: retrieval or generation?
 
@@ -94,19 +105,22 @@ contexts, and it costs ~3 s per question instead of ~160 s. It is conservative: 
 reworded in the documents can be missed, which shifts some generation errors toward
 context loss.
 
-Preliminary, first 100 questions:
+All 499 graded questions (share of questions; phi-2's remaining 3% and Phi-3's 0.2%
+are missed abstentions):
 
 | Model | Correct | Generation error | Context loss | Retrieval miss |
 |---|---:|---:|---:|---:|
-| Qwen2.5-7B | 57% | 22% | 13% | 8% |
-| Phi-3-mini | 51% | 20% | 17% | 12% |
-| phi-2 | 40% | 28% | 22% | 10% |
+| Qwen2.5-7B | 57.3% | 24.8% | 12.0% | 5.8% |
+| Phi-3-mini | 51.9% | 26.5% | 12.4% | 9.0% |
+| phi-2 | 36.9% | 33.7% | 15.4% | 11.0% |
 
-Failures split roughly evenly between generation and the stages before it (context loss
-plus retrieval miss: 21-32%). Context loss - facts cut by the 4,500-character prompt
-budget - stays a large share for every model, and weaker models add more generation
-errors. (At 25 questions the split looked tilted toward pre-generation failures; it did
-not hold up.)
+Generation error is the largest single cause for every model. The stages before
+generation (context loss plus retrieval miss) account for 42-45% of each model's wrong
+answers: 89 of 213 for Qwen. 54% of gold facts reach the prompt and 58% of questions
+have their evidence in context, so context loss - facts cut by the 4,500-character
+prompt budget - stays a large share for every model, and weaker models add more
+generation errors. (At 25 questions the split looked tilted toward pre-generation
+failures, and at 100 it looked even; neither held up.)
 
 ### Lessons from building the judge
 
